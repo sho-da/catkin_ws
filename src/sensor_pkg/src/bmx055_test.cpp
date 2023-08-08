@@ -10,6 +10,7 @@ void led_control(int value) {
     gpioWrite(LED_PIN, value);
 }
 
+
 float get_acc_data(int bus) {
     float theta_deg =0;
     unsigned char data[4];
