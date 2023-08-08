@@ -69,7 +69,6 @@ int main(int argc, char** argv)
 
         std_msgs::Float64 imu_msg;
         imu_msg.data = theta_deg;
-
         imu_pub.publish(imu_msg);
 
         ros::spinOnce();
