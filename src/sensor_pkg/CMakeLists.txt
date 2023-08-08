@@ -203,12 +203,14 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-add_executable(imu_node src/imu_node.cpp) # ソースファイル名を適宜変更
+add_executable(bmx055_publisher src/bmx055_publisher.cpp) # ソースファイル名を適宜変更
 
-target_link_libraries(imu_node
+target_link_libraries(bmx055_publisher
   ${catkin_LIBRARIES}
+  wiringPi
+  wiringPiI2C
 )
 
-install(TARGETS imu_node
+install(TARGETS bmx055_publisher
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
