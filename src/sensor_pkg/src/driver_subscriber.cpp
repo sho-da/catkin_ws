@@ -3,6 +3,10 @@
 #include <cmath>
 #include <unistd.h>
 
+int IN1 = 17;   // Motor driver input 1
+int IN2 = 27;   // Motor driver input 2
+int motor_pwm = 18; // Motor driver PWM input
+
 //=========================================================
 //Kalman filter (for all system estimation) variables
 //State vector
@@ -152,6 +156,12 @@ int main(int argc, char** argv)
 
     float y[4][1];
 
+    gpioSetMode(IN1, PI_OUTPUT);
+    gpioSetMode(IN2, PI_OUTPUT);
+    gpioSetMode(motor_pwm, PI_OUTPUT);
+    int pwm_frequency = 10000; // 10 kHz
+    gpioSetPWMfrequency(motor_pwm, pwm_frequency);
+
     while (ros::ok()) {
         ros::spinOnce();
         y[0][0] = theta_data[0][0] * 3.14f/180;
@@ -209,53 +219,53 @@ int main(int argc, char** argv)
         }
         
         //calculate PWM pulse width
-        pwm_width = int( motor_value*100.0f/3.3f );
+        pwm_duty = int( motor_value*100.0f/3.3f )*2.55;
         
         //drive the motor in forward
-        if(pwm_width>=0)
+        if(pwm_duty>=0)
         {
             //over voltage
-            if(pwm_width>100)
+            if(pwm_duty>255)
             {
-                pwm_width = 100;    
+                pwm_width = 255;    
             }         
             //to protect TA7291P
             if(motor_direction == 2)
             {
-                IN1 = 0;
-                IN2 = 0;
-                wait(0.0001); //wait 100 usec    
+                gpioWrite(IN1, 0);
+                gpioWrite(IN2, 0);
+                usleep(100);    
             }        
             //forward
-            IN1 = 1;
-            IN2 = 0;
+            gpioWrite(IN1, 1);
+            gpioWrite(IN2, 0);
             led_g = 1;
-            motor.pulsewidth_us(pwm_width);
+            gpioPWM(motor_pwm, pwm_duty);
             motor_direction = 1;
         }      
         //drive the motor in reverse
         else
         {
             //calculate the absolute value
-            pwm_width = -1 * pwm_width;
+            pwm_duty = -1 * pwm_duty;
 
             //over voltage
-            if(pwm_width>100)
+            if(pwm_duty>255)
             {
-                pwm_width = 100;    
+                pwm_width = 255;    
             }
             //to protect TA7291P
             if(motor_direction == 1)
             {
-                IN1 = 0;
-                IN2 = 0;
-                wait(0.0001); //wait 100 usec    
+                gpioWrite(IN1, 0);
+                gpioWrite(IN2, 0);
+                usleep(100); //wait 100 usec    
             }
             //reverse
-            IN1 = 0;
-            IN2 = 1;
+            gpioWrite(IN1, 0);
+            gpioWrite(IN2, 1);
             led_r = 1;
-            motor.pulsewidth_us(pwm_width);
+            gpioPWM(motor_pwm, pwm_duty);
             motor_direction = 2;          
         }
         rate.sleep();
