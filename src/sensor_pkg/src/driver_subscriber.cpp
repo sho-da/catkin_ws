@@ -42,14 +42,7 @@ float voltage_variance = voltage_error * voltage_error;
 void Kalman_main(float y[4][1]){
      //---------------------------------------
     //Kalman Filter (all system)
-    //---------------------------------------
-    //measurement data
-    y[0][0] = theta_data[0][0] * 3.14f/180;
-    theta1_dot_temp = get_gyro_data();
-    y[1][0] = ( theta1_dot_temp - theta_data[1][0]) * 3.14f/180;
-    y[2][0] = encoder_value * (2*3.14f)/(4*rotary_encoder_resolution);
-    y[3][0] = (y[2][0] - pre_theta2)/feedback_rate;    
-                
+    //---------------------------------------                
     //calculate Kalman gain: G = P'C^T(W+CP'C^T)^-1
     mat_tran(C_x[0], tran_C_x[0], 4, 4);//C^T
     mat_mul(P_x_predict[0], tran_C_x[0], P_CT[0], 4, 4, 4, 4);//P'C^T
@@ -151,7 +144,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "subscriber_node");
     ros::NodeHandle nh;
 
-    ros::Subscriber imu_sub1 = nh.subscribe("theta1_topic", 1, callback_1mu1);
+    ros::Subscriber imu_sub1 = nh.subscribe("theta1_topic", 1, callback_imu1);
     ros::Subscriber imu_sub2 = nh.subscribe("theta1dot_temp_topic", 1, callback_imu2);
     ros::Subscriber enc_sub  = nh.subscribe("theta2_topic", 1, callback_enc);
 
@@ -167,10 +160,104 @@ int main(int argc, char** argv)
         y[3][0] = (y[2][0] - pre_theta2)/feedback_rate; 
         pre_theta2 = y[2][0];
         Kalman_main(y);
-        std_msgs::Float64 imu_msg;
-        imu_msg.data = x_data;
-        imu_pub.publish(imu_msg);
-        ROS_INFO("Published from Kalman_main: %d", imu_msg.data);
+        //------------------------------------------- 
+        //drive motor
+        //------------------------------------------- 
+        //predict the next step data: x'=Ax+Bu
+        Vin = motor_value;
+        if(motor_value > 3.3f)
+        {
+            Vin = 3.3f;
+        }
+        if(motor_value < -3.3f)
+        {
+            Vin = -3.3f;    
+        }
+        mat_mul(A_x[0], x_data[0], A_x_x[0], 4, 4, 4, 1);//Ax_hat
+        mat_mul_const(B_x[0], Vin , B_x_Vin[0], 4, 1);//Bu
+        mat_add(A_x_x[0], B_x_Vin[0], x_data_predict[0], 4, 1);//Ax+Bu 
+        
+        //predict covariance matrix: P'=APA^T + BUB^T
+        mat_tran(A_x[0], tran_A_x[0], 4, 4);//A^T
+        mat_mul(A_x[0], P_x[0], AP[0], 4, 4, 4, 4);//AP
+        mat_mul(AP[0], tran_A_x[0], APAT[0], 4, 4, 4, 4);//APA^T
+        mat_tran(B_x[0], tran_B_x[0], 4, 1);//B^T
+        mat_mul(B_x[0], tran_B_x[0], BBT[0], 4, 1, 1, 4);//BB^T
+        mat_mul_const(BBT[0], voltage_variance, BUBT[0], 4, 4);//BUB^T
+        mat_add(APAT[0], BUBT[0], P_x_predict[0], 4, 4);//APA^T+BUB^T
+
+        //---------------------------------------
+        //Motor control
+        //---------------------------------------
+        //reset
+        motor_value = 0;
+        
+        //calculate Vin
+        for(int i=0; i<4; i++)
+        { 
+            motor_value += Gain[i] * x_data[i][0];
+        }
+        
+        //offset
+        if(motor_value > 0)
+        {
+            motor_value += motor_offset ;   
+        }
+        if(motor_value < 0)
+        {
+            motor_value -= motor_offset;    
+        }
+        
+        //calculate PWM pulse width
+        pwm_width = int( motor_value*100.0f/3.3f );
+        
+        //drive the motor in forward
+        if(pwm_width>=0)
+        {
+            //over voltage
+            if(pwm_width>100)
+            {
+                pwm_width = 100;    
+            }         
+            //to protect TA7291P
+            if(motor_direction == 2)
+            {
+                IN1 = 0;
+                IN2 = 0;
+                wait(0.0001); //wait 100 usec    
+            }        
+            //forward
+            IN1 = 1;
+            IN2 = 0;
+            led_g = 1;
+            motor.pulsewidth_us(pwm_width);
+            motor_direction = 1;
+        }      
+        //drive the motor in reverse
+        else
+        {
+            //calculate the absolute value
+            pwm_width = -1 * pwm_width;
+
+            //over voltage
+            if(pwm_width>100)
+            {
+                pwm_width = 100;    
+            }
+            //to protect TA7291P
+            if(motor_direction == 1)
+            {
+                IN1 = 0;
+                IN2 = 0;
+                wait(0.0001); //wait 100 usec    
+            }
+            //reverse
+            IN1 = 0;
+            IN2 = 1;
+            led_r = 1;
+            motor.pulsewidth_us(pwm_width);
+            motor_direction = 2;          
+        }
         rate.sleep();
     }
 }
