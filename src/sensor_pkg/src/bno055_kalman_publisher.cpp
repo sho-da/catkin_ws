@@ -4,8 +4,23 @@
 #include <cmath>
 #include <unistd.h>
 
-#define ACCL_ADDR 0x19
-#define GYRO_ADDR 0x69
+#define BNO055_ADDR 0x28
+#define PAGE_ID_ADDR 0x07
+// page 1 
+// G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
+#define ACC_CONFIG_ADDR 0x08
+// deg/s-range: xxx001b (+/-1000deg/s), Bandwidth: 010xxxb(116Hz)
+#define GYRO_CONFIG_ADDR_1 0x0A
+// Operation mode: 000b(Normal)
+#define GYRO_CONFIG_ADDR_2 0x0B
+// page 0
+#define ACC_Y_L 0x0A  //<7:0>
+#define ACC_Y_H 0x0B  //<15:8>
+#define ACC_Z_L 0x0C  //<7:0>
+#define ACC_Z_H 0x0D  //<15:8>
+#define GYR_X_L 0x14  //<7:0>
+#define GYR_X_H 0x15  //<15:8>
+
 
 //=========================================================
 //Accelerometer and gyro statistical data
@@ -208,16 +223,16 @@ void mat_inv(float *m, float *sol, int column, int row)
 float get_accl_data(int bus) {
     float theta_deg =0;
     unsigned char data[4];
-    i2cReadI2CBlockData(bus, 0x04, (char*)data, 4);
+    i2cReadI2CBlockData(bus, 0x0A, (char*)data, 4);
     
-    int y_data = ((data[0] & 0xF0) + (data[1] * 256)) / 16;
-    if (y_data > 2047) {
-        y_data -= 4096;
+    int y_data = (data[0] & 0xFF) + (data[1] * 256);
+    if (y_data > 32767) {
+        y_data -= 65536;
     }
 
     int z_data = ((data[2] & 0xF0) + (data[3] * 256)) / 16;
-    if (z_data > 2047) {
-        z_data -= 4096;
+    if (z_data > 32767) {
+        z_data -= 65536;
     }
 
     theta_deg = atan2( float(z_data),float(y_data)) * 57.29578f;
@@ -227,12 +242,11 @@ float get_accl_data(int bus) {
 void accl_init(int bus)
 {             
     //initialize ACC register 0x0F (range)
-    //Full scale = +/- 2 G
-    i2cWriteByteData(bus, 0x0F, 0x03);
-    //initialize ACC register 0x10 (band width)
-    //Filter bandwidth = 1000 Hz
-    i2cWriteByteData(bus, 0x10, 0x0F);
- 
+    i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
+    // G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
+    i2cWriteByteData(bus, ACC_CONFIG_ADDR, 0b11100);
+    i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
+
     //get data
     float theta_array[sample_num];
     for(int i=0; i<sample_num; i++)
@@ -264,7 +278,7 @@ void accl_init(int bus)
 float get_gyro_data(int bus) {
     float x_data =0;
     unsigned char data[2];
-    i2cReadI2CBlockData(bus, 0x02, (char*)data, 2);
+    i2cReadI2CBlockData(bus, 0x014, (char*)data, 2);
     
     int x_data = data[0] + 256 * data[1];
     if (y_data > 32767) {
@@ -278,12 +292,13 @@ float get_gyro_data(int bus) {
 //statistical data of gyro
 void gyro_init(int bus)
 {             
-    //initialize Gyro register 0x0F (range)
-    //Full scale = +/- 1000 deg/s
-    i2cWriteByteData(bus, 0x0F, 0x01);
-    //initialize Gyro register 0x10 (band width)
-    //Data rate = 1000 Hz, Filter bandwidth = 116 Hz
-    i2cWriteByteData(bus, 0x10, 0x02);
+    //initialize Gyro register
+    i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
+    // deg/s-range: xxx001b (+/-1000deg/s), Bandwidth: 010xxxb(116Hz)
+    // Operation mode: 000b(Normal)
+    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_1, 0b10001);
+    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_2, 0b000);
+    i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
   
     //get data
     float theta_dot_array[sample_num];
@@ -376,9 +391,9 @@ void update_theta(int bus_accl,int bus_gyro)
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "bmx055_kalman_publisher");
+    ros::init(argc, argv, "bno055_kalman_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta_data", 1);
+    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta_data_pub", 1);
     //I2C setting
     int bus_accl = i2cOpen(0, ACCL_ADDR, 0);
     int bus_gyro = i2cOpen(1, ACCL_GYRO, 0);
@@ -396,14 +411,14 @@ int main(int argc, char **argv) {
     P_theta_predict[1][0] = 0;
     P_theta_predict[1][1] = theta_dot_variance;
     
-    ros::Rate rate(400);  // パブリッシュの頻度を設定 (1 Hz)
+    ros::Rate rate(400);  // パブリッシュの頻度を設定 (4000 Hz)
 
     while (ros::ok()) {
         update_theta(bus_accl, bus_gyro);
         std_msgs::Float64 imu_msg;
         imu_msg.data = theta_data;
         imu_pub.publish(imu_msg);
-        ROS_INFO("Published from BMX055: %d", imu_msg.data);
+        ROS_INFO("Published from BNO055: %d", imu_msg.data);
         rate.sleep();
     }
 
@@ -411,3 +426,7 @@ int main(int argc, char **argv) {
     i2cClose(bus_gyro);
     return 0;
 }
+
+
+
+ 
