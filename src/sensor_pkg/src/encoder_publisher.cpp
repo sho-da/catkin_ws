@@ -27,7 +27,7 @@ void rotary_encoder()
 int main() {
     ros::init(argc, argv, "encoder_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta_data2_pub", 1);
+    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta2_topic", 1);
 
     if (gpioInitialise() < 0) {
         std::cerr << "pigpio initialization failed." << std::endl;

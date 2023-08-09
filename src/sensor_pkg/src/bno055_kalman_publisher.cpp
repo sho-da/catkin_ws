@@ -393,7 +393,9 @@ void update_theta(int bus_accl,int bus_gyro)
 int main(int argc, char **argv) {
     ros::init(argc, argv, "bno055_kalman_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta_data_pub", 1);
+    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
+    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
+    
     //I2C setting
     int bus_accl = i2cOpen(0, ACCL_ADDR, 0);
     int bus_gyro = i2cOpen(1, ACCL_GYRO, 0);
@@ -415,10 +417,17 @@ int main(int argc, char **argv) {
 
     while (ros::ok()) {
         update_theta(bus_accl, bus_gyro);
+        theta1dot_temp = get_gyro_data(bus_gyro);
         std_msgs::Float64 imu_msg;
         imu_msg.data = theta_data;
         imu_pub.publish(imu_msg);
-        ROS_INFO("Published from BNO055: %d", imu_msg.data);
+        std_msgs::Float64 imu_msg2;
+        imu_msg2.data = theta1dot_temp;
+        imu_pub2.publish(imu_msg2);
+
+        ROS_INFO("Publish theta1 from BNO055: %d", imu_msg.data);
+        ROS_INFO("Publish theta1dot_temp from BNO055: %d", imu_msg.data);
+        
         rate.sleep();
     }
 
