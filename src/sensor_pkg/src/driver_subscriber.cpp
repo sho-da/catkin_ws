@@ -2,6 +2,7 @@
 #include <std_msgs/Float64.h>
 #include <cmath>
 #include <unistd.h>
+#include <pigpio.h>
 
 int IN1 = 17;   // Motor driver input 1
 int IN2 = 27;   // Motor driver input 2
