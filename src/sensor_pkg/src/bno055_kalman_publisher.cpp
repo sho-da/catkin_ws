@@ -14,12 +14,12 @@
 // Operation mode: 000b(Normal)
 #define GYRO_CONFIG_ADDR_2 0x0B
 // page 0
-#define ACC_Y_L 0x0A  //<7:0>
-#define ACC_Y_H 0x0B  //<15:8>
-#define ACC_Z_L 0x0C  //<7:0>
-#define ACC_Z_H 0x0D  //<15:8>
-#define GYR_X_L 0x14  //<7:0>
-#define GYR_X_H 0x15  //<15:8>
+#define ACC_Y_L 0x0A  //ay<7:0>
+// #define ACC_Y_H 0x0B  //ay<15:8>
+// #define ACC_Z_L 0x0C  //az<7:0>
+// #define ACC_Z_H 0x0D  //az<15:8>
+#define GYR_X_L 0x14  //GYR_X<7:0>
+// #define GYR_X_H 0x15  //GYR_X<15:8>
 
 
 //=========================================================
@@ -42,7 +42,7 @@ float theta_data_predict[2][1];
 float theta_data[2][1];
 //Covariance matrix
 float P_theta_predict[2][2];
-float P_theta[2][2];
+// float P_theta[2][2]; // !caution!
 //"A" of the state equation
 float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};
 //"B" of the state equation
@@ -221,22 +221,22 @@ void mat_inv(float *m, float *sol, int column, int row)
 }
 
 float get_accl_data(int bus) {
-    float theta_deg =0;
+    float theta1_deg =0;
     unsigned char data[4];
-    i2cReadI2CBlockData(bus, 0x0A, (char*)data, 4);
+    i2cReadI2CBlockData(bus, ACC_Y_L, (char*)data, 4);
     
     int y_data = (data[0] & 0xFF) + (data[1] * 256);
     if (y_data > 32767) {
         y_data -= 65536;
     }
 
-    int z_data = ((data[2] & 0xF0) + (data[3] * 256)) / 16;
+    int z_data = (data[2] & 0xF0) + (data[3] * 256);
     if (z_data > 32767) {
         z_data -= 65536;
     }
 
-    theta_deg = atan2( float(z_data),float(y_data)) * 57.29578f;
-    return theta_deg;
+    theta1_deg = atan2( float(z_data),float(y_data)) * 57.29578f;
+    return theta1_deg;
 }
 
 void accl_init(int bus)
@@ -244,7 +244,7 @@ void accl_init(int bus)
     //initialize ACC register 0x0F (range)
     i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
     // G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
-    i2cWriteByteData(bus, ACC_CONFIG_ADDR, 0b11100);
+    i2cWriteByteData(bus, ACC_CONFIG_ADDR, 0b00011100);
     i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
 
     //get data
@@ -276,17 +276,17 @@ void accl_init(int bus)
 }
 
 float get_gyro_data(int bus) {
-    float x_data =0;
+    int theta1_dot =0;
     unsigned char data[2];
-    i2cReadI2CBlockData(bus, 0x014, (char*)data, 2);
+    i2cReadI2CBlockData(bus, GYR_X_L, (char*)data, 2);
     
-    int x_data = data[0] + 256 * data[1];
-    if (y_data > 32767) {
-        y_data -= 65536;
+    theta1_dot = data[0] + 256 * data[1];
+    if (theta1_dot > 32767) {
+        theta1_dot -= 65536;
     }
-    x_data = -1 * x_data;
+    theta1_dot = -1 * theta1_dot; // !caution!
     // +1000 (deg/sec) / 2^15 = 0.0305176
-    return float(x_data) * 0.0305176f;
+    return float(theta1_dot) * 0.0305176f;
 }
 
 //statistical data of gyro
@@ -296,7 +296,7 @@ void gyro_init(int bus)
     i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
     // deg/s-range: xxx001b (+/-1000deg/s), Bandwidth: 010xxxb(116Hz)
     // Operation mode: 000b(Normal)
-    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_1, 0b10001);
+    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_1, 0b010001);
     i2cWriteByteData(bus, GYRO_CONFIG_ADDR_2, 0b000);
     i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
   
@@ -332,13 +332,12 @@ void gyro_init(int bus)
 //Kalman filter for "theta" & "theta_dot_bias" 
 //It takes 650 usec. (NUCLEO-F401RE 84MHz, BMX055)
 //=========================================================
-void update_theta(int bus_accl,int bus_gyro)
+void update_theta(int bus)
 {     
     //measurement data
-    float y = get_accl_data(bus_accl); //degree
-    
+    float y = get_accl_data(bus); //degree
     //input data
-    float theta_dot_gyro = get_gyro_data(bus_gyro); //degree/sec
+    float theta_dot_gyro = get_gyro_data(bus); //degree/sec
       
     //calculate Kalman gain: G = P'C^T(W+CP'C^T)^-1
     float P_CT[2][1] = {};
@@ -365,6 +364,7 @@ void update_theta(int bus_accl,int bus_gyro)
     mat_mul(G[0], C_theta[0], GC[0], 2, 1, 1, 2);//GC
     float I2_GC[2][2] = {};
     mat_sub(I2[0], GC[0], I2_GC[0], 2, 2);//I-GC
+    float P_theta[2][2] = {}; // !caution!
     mat_mul(I2_GC[0], P_theta_predict[0], P_theta[0], 2, 2, 2, 2);//(I-GC)P'
       
     //predict the next step data: theta'=Atheta+Bu
@@ -397,10 +397,9 @@ int main(int argc, char **argv) {
     ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
     
     //I2C setting
-    int bus_accl = i2cOpen(0, ACCL_ADDR, 0);
-    int bus_gyro = i2cOpen(1, ACCL_GYRO, 0);
-    acc_init(bus_accl); 
-    gyro_init(bus_gyro);
+    int bus = i2cOpen(0, BNO055_ADDR, 0);
+    accl_init(bus); 
+    gyro_init(bus);
 
     //Kalman filter (angle) initialization
     //initial value of theta_data_predict
@@ -413,11 +412,13 @@ int main(int argc, char **argv) {
     P_theta_predict[1][0] = 0;
     P_theta_predict[1][1] = theta_dot_variance;
     
-    ros::Rate rate(400);  // パブリッシュの頻度を設定 (4000 Hz)
+    ros::Rate rate(theta_update_freq);  // パブリッシュの頻度を設定 (4000 Hz)
+
+    float theta1dot_temp;
 
     while (ros::ok()) {
-        update_theta(bus_accl, bus_gyro);
-        theta1dot_temp = get_gyro_data(bus_gyro);
+        update_theta(bus);
+        theta1dot_temp = get_gyro_data(bus);
         std_msgs::Float64 imu_msg;
         imu_msg.data = theta_data;
         imu_pub.publish(imu_msg);
@@ -426,7 +427,7 @@ int main(int argc, char **argv) {
         imu_pub2.publish(imu_msg2);
 
         ROS_INFO("Publish theta1 from BNO055: %d", imu_msg.data);
-        ROS_INFO("Publish theta1dot_temp from BNO055: %d", imu_msg.data);
+        ROS_INFO("Publish theta1dot_temp from BNO055: %d", imu_msg2.data);
         
         rate.sleep();
     }

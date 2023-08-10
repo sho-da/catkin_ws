@@ -1,0 +1,55 @@
+bmx bno check
+
+global 
+//=========================================================
+//Accelerometer and gyro statistical data
+int sample_num = 100;
+float meas_interval = 0.01;
+float theta_mean;
+float theta_variance;
+float theta_dot_mean;
+float theta_dot_variance;
+
+//=========================================================
+//Kalman
+float theta_update_freq = 400; //Hz
+float theta_update_interval = 1.0f/theta_update_freq;
+float theta_data_predict[2][1];
+float theta_data[2][1];
+float P_theta_predict[2][2];
+// float P_theta[2][2];
+float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};
+float B_theta[2][1] = {{theta_update_interval}, {0}};
+float C_theta[1][2] = {{1, 0}};
+
+//=========================================================
+//function
+float theta1_deg = get_accl_data(int bus, global(nan));
+//update theta_mean, theta_variance
+accl_init(int bus, global(theta_mean,theta_varience,sample_num,meas_interval));
+
+float x_data =get_gyro_data(int bus);
+//update theta_dot_mean, theta_dot_variance
+gyro_init(int bus, global(theta_dot_mean,theta_dot_varience,sample_num,meas_interval));
+
+update_theta(int bus1, bus2 gloabal(theta_data_predict,theta_data,P_theta_predict,A_theta,B_theta,C_theta));
+
+
+--------------------------------------------------------------
+
+encoder check
+
+global
+
+int pin1 = 18;  // to A
+int pin2 = 16;  // to B
+int rotary_encoder_update_rate = 25; //usec
+int rotary_encoder_resolution = 100;
+int encoder_value = 0;
+int table[16] = {0, 1, -1, 0,  -1, 0, 0, 1,  1, 0, 0, -1,  0, -1, 1, 0};
+float pre_theta2 = 0;
+
+//===========================================================
+//function
+//update encoder_value, table
+rotary_encoder(global(table,encoder_value));
