@@ -1,11 +1,13 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <pigpio.h>
+#include "pigpiod_if2.h"
 #include <cmath>
 #include <unistd.h>
 
 const int ACCL_ADDR=0x19;
 const int GYRO_ADDR=0x69;
+
+int pi;
 
 //=========================================================
 //Accelerometer and gyro statistical data
@@ -208,7 +210,7 @@ void mat_inv(float *m, float *sol, int column, int row)
 float get_accl_data(int bus) {
     float theta1_deg =0;
     unsigned char data[4];
-    i2cReadI2CBlockData(bus, 0x04, (char*)data, 4);
+    i2c_read_i2c_block_data(pi,bus, 0x04, (char *)data, 4);
     
     int y_data = ((data[0] & 0xF0) + (data[1] * 256)) / 16;
     if (y_data > 2047) {
@@ -228,10 +230,10 @@ void accl_init(int bus)
 {             
     //initialize ACC register 0x0F (range)
     //Full scale = +/- 2 G
-    i2cWriteByteData(bus, 0x0F, 0x03);
+    i2c_write_byte_data(pi,bus, 0x0F, 0x03);
     //initialize ACC register 0x10 (band width)
     //Filter bandwidth = 1000 Hz
-    i2cWriteByteData(bus, 0x10, 0x0F);
+    i2c_write_byte_data(pi,bus, 0x10, 0x0F);
  
     //get data
     float theta_array[sample_num];
@@ -264,7 +266,7 @@ void accl_init(int bus)
 float get_gyro_data(int bus) {
     int theta1_dot=0;
     unsigned char data[2];
-    i2cReadI2CBlockData(bus, 0x02, (char*)data, 2);
+    i2c_read_i2c_block_data(pi,bus, 0x02, (char*)data, 2);
     
     theta1_dot = data[0] + 256 * data[1];
     if (theta1_dot > 32767) {
@@ -280,10 +282,10 @@ void gyro_init(int bus)
 {             
     //initialize Gyro register 0x0F (range)
     //Full scale = +/- 1000 deg/s
-    i2cWriteByteData(bus, 0x0F, 0x01);
+    i2c_write_byte_data(pi,bus, 0x0F, 0x01);
     //initialize Gyro register 0x10 (band width)
     //Data rate = 1000 Hz, Filter bandwidth = 116 Hz
-    i2cWriteByteData(bus, 0x10, 0x02);
+    i2c_write_byte_data(pi,bus, 0x10, 0x02);
   
     //get data
     float theta_dot_array[sample_num];
@@ -377,19 +379,16 @@ void update_theta(int bus_accl,int bus_gyro)
 }
 
 int main(int argc, char **argv) {
-    if (gpioInitialise() < 0) {
-        // 初期化失敗
-        return 1;
-    }
+    pi=pigpio_start(NULL,NULL);
 
     ros::init(argc, argv, "bmx055_kalman_publisher");
     ros::NodeHandle nh;
     ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
     ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 1);
-    
+
     //I2C setting
-    int bus_accl = i2cOpen(0, ACCL_ADDR, 0);
-    int bus_gyro = i2cOpen(1, GYRO_ADDR, 0);
+    int bus_accl = i2c_open(pi, 1, ACCL_ADDR, 0);
+    int bus_gyro = i2c_open(pi, 1, GYRO_ADDR, 0);
     accl_init(bus_accl); 
     gyro_init(bus_gyro);
 
@@ -418,10 +417,10 @@ int main(int argc, char **argv) {
     ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
     ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
 
-    ros::Rate rate(theta_update_freq);  // パブリッシュの頻度を設定 (400 Hz)
+    ros::Rate rate(400);  // パブリッシュの頻度を設定 (400 Hz)
 
     float theta1dot_temp;
-
+    int count=0;
     while (ros::ok()) {
         update_theta(bus_accl, bus_gyro);
         theta1dot_temp = get_gyro_data(bus_gyro);
@@ -431,15 +430,18 @@ int main(int argc, char **argv) {
         std_msgs::Float64 imu_msg2;
         imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
+        count += 1;
+        if (count % 100 == 0){
+            ROS_INFO("Publish theta1 from BMX055: %f", imu_msg1.data);
+            ROS_INFO("Publish theta1dot_temp from BMX055: %f", imu_msg2.data);
+        }
         
-        ROS_INFO("Publish theta1 from BMX055: %f", imu_msg1.data);
-        // ROS_INFO("Publish theta1dot_temp from BMX055: %f", imu_msg2.data);
         
         rate.sleep();
     }
 
-    i2cClose(bus_accl);
-    i2cClose(bus_gyro);
-    gpioTerminate();
+    i2c_close(pi,bus_accl);
+    i2c_close(pi,bus_gyro);
+    pigpio_stop(pi);
     return 0;
 }

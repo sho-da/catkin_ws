@@ -1,11 +1,14 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <pigpio.h>
+#include "pigpiod_if2.h"
 #include <cmath>
 #include <unistd.h>
 
 const int BNO055_ADDR=0x28;
 const int PAGE_ID_ADDR=0x07;
+
+int pi;
+
 // page 1 
 // G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
 const int ACC_CONFIG_ADDR=0x08;
@@ -223,7 +226,7 @@ void mat_inv(float *m, float *sol, int column, int row)
 float get_accl_data(int bus) {
     float theta1_deg =0;
     unsigned char data[4];
-    i2cReadI2CBlockData(bus, ACC_Y_L, (char*)data, 4);
+    i2c_read_i2c_block_data(pi,bus, ACC_Y_L, (char *)data, 4);
     
     int y_data = (data[0] & 0xFF) + (data[1] * 256);
     if (y_data > 32767) {
@@ -242,10 +245,10 @@ float get_accl_data(int bus) {
 void accl_init(int bus)
 {             
     //initialize ACC register 0x0F (range)
-    i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
+    i2c_write_byte_data(pi,bus, PAGE_ID_ADDR, 1);
     // G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
-    i2cWriteByteData(bus, ACC_CONFIG_ADDR, 0b00011100);
-    i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
+    i2c_write_byte_data(pi,bus, ACC_CONFIG_ADDR, 0b00011100);
+    i2c_write_byte_data(pi,bus, PAGE_ID_ADDR, 0);
 
     //get data
     float theta_array[sample_num];
@@ -278,7 +281,7 @@ void accl_init(int bus)
 float get_gyro_data(int bus) {
     int theta1_dot =0;
     unsigned char data[2];
-    i2cReadI2CBlockData(bus, GYR_X_L, (char*)data, 2);
+    i2c_read_i2c_block_data(pi,bus, GYR_X_L, (char*)data, 2);
     
     theta1_dot = data[0] + 256 * data[1];
     if (theta1_dot > 32767) {
@@ -293,12 +296,12 @@ float get_gyro_data(int bus) {
 void gyro_init(int bus)
 {             
     //initialize Gyro register
-    i2cWriteByteData(bus, PAGE_ID_ADDR, 1);
+    i2c_write_byte_data(pi,bus, PAGE_ID_ADDR, 1);
     // deg/s-range: xxx001b (+/-1000deg/s), Bandwidth: 010xxxb(116Hz)
     // Operation mode: 000b(Normal)
-    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_1, 0b010001);
-    i2cWriteByteData(bus, GYRO_CONFIG_ADDR_2, 0b000);
-    i2cWriteByteData(bus, PAGE_ID_ADDR, 0);
+    i2c_write_byte_data(pi,bus, GYRO_CONFIG_ADDR_1, 0b010001);
+    i2c_write_byte_data(pi,bus, GYRO_CONFIG_ADDR_2, 0b000);
+    i2c_write_byte_data(pi,bus, PAGE_ID_ADDR, 0);
   
     //get data
     float theta_dot_array[sample_num];
@@ -391,13 +394,15 @@ void update_theta(int bus)
 }
 
 int main(int argc, char **argv) {
+    pi=pigpio_start(NULL,NULL);
+
     ros::init(argc, argv, "bno055_kalman_publisher");
     ros::NodeHandle nh;
     ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
     ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 1);
     
     //I2C setting
-    int bus = i2cOpen(0, BNO055_ADDR, 0);
+    int bus = i2c_open(pi,1,BNO055_ADDR,0);
     accl_init(bus); 
     gyro_init(bus);
 
@@ -414,11 +419,11 @@ int main(int argc, char **argv) {
     
     std_msgs::Float64 c_var_msg;
     c_var_msg.data = theta_variance;
-    imu_pub1.publish(c_var_msg);
+    var_pub1.publish(c_var_msg);
     
     std_msgs::Float64 cdot_var_msg;
     cdot_var_msg.data = theta_dot_variance;
-    imu_pub1.publish(cdot_var_msg);
+    var_pub1.publish(cdot_var_msg);
     
     var_pub1.shutdown();
     var_pub2.shutdown();
@@ -429,25 +434,27 @@ int main(int argc, char **argv) {
     ros::Rate rate(theta_update_freq);  // パブリッシュの頻度を設定 (4000 Hz)
 
     float theta1dot_temp;
-
+    int count=0;
     while (ros::ok()) {
         update_theta(bus);
         theta1dot_temp = get_gyro_data(bus);
         std_msgs::Float64 imu_msg1;
         imu_msg1.data = theta_data[0][0];
-        imu_pub.publish(imu_msg1);
+        imu_pub1.publish(imu_msg1);
         std_msgs::Float64 imu_msg2;
         imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
-
-        ROS_INFO("Publish theta1 from BNO055: %d", imu_msg.data);
-        ROS_INFO("Publish theta1dot_temp from BNO055: %d", imu_msg2.data);
-        
+        count += 1;
+        if (count % 100 == 0){
+            ROS_INFO("Publish theta1 from BNO055: %d", imu_msg1.data);
+            ROS_INFO("Publish theta1dot_temp from BNO055: %d", imu_msg2.data);
+        }
         rate.sleep();
     }
 
-    i2cClose(bus_accl);
-    i2cClose(bus_gyro);
+    i2c_close(pi,bus_accl);
+    i2c_close(pi,bus_gyro);
+    pigpio_stop(pi);
     return 0;
 }
 
