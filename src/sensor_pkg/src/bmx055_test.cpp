@@ -3,8 +3,8 @@
 #include <cmath>
 #include <unistd.h>
 
-#define LED_PIN 17
-#define ACCL_ADDR 0x19
+const int LED_PIN=17;
+const int ACCL_ADDR=0x19;
 
 void led_control(int value) {
     gpioWrite(LED_PIN, value);

@@ -1,0 +1,102 @@
+bmx bno check
+
+global 
+//=========================================================
+//Accelerometer and gyro statistical data
+int sample_num = 100;
+float meas_interval = 0.01;
+float theta_mean;
+float theta_variance;
+float theta_dot_mean;
+float theta_dot_variance;
+
+//=========================================================
+//Kalman
+float theta_update_freq = 400; //Hz
+float theta_update_interval = 1.0f/theta_update_freq;
+float theta_data_predict[2][1];
+float theta_data[2][1];
+float P_theta_predict[2][2];
+// float P_theta[2][2];
+float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};
+float B_theta[2][1] = {{theta_update_interval}, {0}};
+float C_theta[1][2] = {{1, 0}};
+
+//=========================================================
+//function
+float theta1_deg = get_accl_data(int bus, global(nan));
+//update theta_mean, theta_variance
+accl_init(int bus, global(theta_mean,theta_varience,sample_num,meas_interval));
+
+float x_data =get_gyro_data(int bus);
+//update theta_dot_mean, theta_dot_variance
+gyro_init(int bus, global(theta_dot_mean,theta_dot_varience,sample_num,meas_interval));
+
+update_theta(int bus1, bus2 gloabal(theta_data_predict,theta_data,P_theta_predict,A_theta,B_theta,C_theta));
+
+
+--------------------------------------------------------------
+
+encoder check
+
+global
+
+int pin1 = 18;  // to A
+int pin2 = 16;  // to B
+int rotary_encoder_update_rate = 25; //usec
+int rotary_encoder_resolution = 100;
+int encoder_value = 0;
+int table[16] = {0, 1, -1, 0,  -1, 0, 0, 1,  1, 0, 0, -1,  0, -1, 1, 0};
+float pre_theta2 = 0;
+
+//===========================================================
+//function
+//update encoder_value, table
+rotary_encoder(global(table,encoder_value));
+
+driver check
+
+global
+
+const int ENC_IN1 = 17;   // Motor driver input 1
+const int ENC_IN2 = 27;   // Motor driver input 2
+const int ENC_PWM = 18; // Motor driver PWM input
+
+int rotary_encoder_resolution = 100;
+float theta_variance;
+float theta_dot_variance;
+float theta_data;
+float theta_dot_data;
+float theta2_data;
+
+//=========================================================
+//Kalman filter (for all system estimation) variables
+float x_data_predict[4][1];
+float x_data[4][1];
+float P_x_predict[4][4];
+float P_x[4][4];
+float A_x[4][4] = {{1.00210e+00,1.00070e-02,0.00000e+00,3.86060e-05},{4.20288e-01,1.00210e+00,0.00000e+00,7.65676e-03},{-1.15751e-03,-3.87467e-06,1.00000e+00,9.74129e-03},{-2.29569e-01,-1.15751e-03,0.00000e+00,9.48707e-01}};
+float B_x[4][1] = {{-2.70805e-04},{-5.37090e-02},{1.81472e-03},{3.59797e-01}};
+float C_x[4][4] = {{1, 0, 0, 0},{0, 1, 0, 0},{0, 0, 1, 0},{0, 0, 0, 1}};
+float measure_variance_mat[4][4];
+float voltage_error = 0.01; //volt
+float voltage_variance = voltage_error * voltage_error;
+
+//=========================================================
+//Motor control variables
+float feedback_rate = 0.01; //sec
+float motor_value = 0;
+int pwm_duty = 0;
+int motor_direction = 1;
+float motor_offset = 0.17; //volt
+
+//=========================================================
+//Gain vector for the state feedback 
+//(R=1000, Q = diag(1, 1, 10, 10), f=100Hz)
+float Gain[4] = {29.87522919, 4.59857246, 0.09293, 0.37006248};
+
+
+
+//=========================================================
+//function
+void Kalman_main(float y, global(C_x,))
