@@ -33,7 +33,7 @@ float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};
 //"B" of the state equation
 float B_theta[2][1] = {{theta_update_interval}, {0}};
 //"C" of the state equation
-const float C_theta[1][2] = {{1, 0}};
+float C_theta[1][2] = {{1, 0}};
 
 //=========================================================
 // Matrix common functions
@@ -238,7 +238,7 @@ void accl_init(int bus)
     for(int i=0; i<sample_num; i++)
     {
         theta_array[i] = get_accl_data(bus);    
-        wait( meas_interval );
+        sleep( meas_interval );
     }
     
     //calculate mean
@@ -290,7 +290,7 @@ void gyro_init(int bus)
     for(int i=0;i<sample_num;i++)
     {
         theta_dot_array[i] = get_gyro_data(bus);    
-        wait(meas_interval);
+        sleep(meas_interval);
     }
     
     //calculate mean
@@ -377,6 +377,11 @@ void update_theta(int bus_accl,int bus_gyro)
 }
 
 int main(int argc, char **argv) {
+    if (gpioInitialise() < 0) {
+        // 初期化失敗
+        return 1;
+    }
+
     ros::init(argc, argv, "bmx055_kalman_publisher");
     ros::NodeHandle nh;
     ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
@@ -401,11 +406,11 @@ int main(int argc, char **argv) {
     
     std_msgs::Float64 c_var_msg;
     c_var_msg.data = theta_variance;
-    imu_pub1.publish(c_var_msg);
+    var_pub1.publish(c_var_msg);
     
     std_msgs::Float64 cdot_var_msg;
     cdot_var_msg.data = theta_dot_variance;
-    imu_pub1.publish(cdot_var_msg);
+    var_pub2.publish(cdot_var_msg);
     
     var_pub1.shutdown();
     var_pub2.shutdown();
@@ -427,13 +432,14 @@ int main(int argc, char **argv) {
         imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
         
-        ROS_INFO("Publish theta1 from BMX055: %d", imu_msg.data);
-        ROS_INFO("Publish theta1dot_temp from BMX055: %d", imu_msg2.data);
+        ROS_INFO("Publish theta1 from BMX055: %f", imu_msg1.data);
+        // ROS_INFO("Publish theta1dot_temp from BMX055: %f", imu_msg2.data);
         
         rate.sleep();
     }
 
     i2cClose(bus_accl);
     i2cClose(bus_gyro);
+    gpioTerminate();
     return 0;
 }
