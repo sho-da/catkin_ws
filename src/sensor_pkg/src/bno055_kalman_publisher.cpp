@@ -4,28 +4,28 @@
 #include <cmath>
 #include <unistd.h>
 
-#define BNO055_ADDR 0x28
-#define PAGE_ID_ADDR 0x07
+const int BNO055_ADDR=0x28;
+const int PAGE_ID_ADDR=0x07;
 // page 1 
 // G-range: xxxxx00b (+/-2g), Bandwidth: xx111xxb(1000Hz), Operation mode: 000xxxxxb(Normal)
-#define ACC_CONFIG_ADDR 0x08
+const int ACC_CONFIG_ADDR=0x08;
 // deg/s-range: xxx001b (+/-1000deg/s), Bandwidth: 010xxxb(116Hz)
-#define GYRO_CONFIG_ADDR_1 0x0A
+const int GYRO_CONFIG_ADDR_1=0x0A;
 // Operation mode: 000b(Normal)
-#define GYRO_CONFIG_ADDR_2 0x0B
+const int GYRO_CONFIG_ADDR_2=0x0B;
 // page 0
-#define ACC_Y_L 0x0A  //ay<7:0>
-// #define ACC_Y_H 0x0B  //ay<15:8>
-// #define ACC_Z_L 0x0C  //az<7:0>
-// #define ACC_Z_H 0x0D  //az<15:8>
-#define GYR_X_L 0x14  //GYR_X<7:0>
-// #define GYR_X_H 0x15  //GYR_X<15:8>
+const int ACC_Y_L=0x0A;  //ay<7:0>
+// const int ACC_Y_H=0x0B;  //ay<15:8>
+// const int ACC_Z_L=0x0C;  //az<7:0>
+// const int ACC_Z_H=0x0D;  //az<15:8>
+const int GYR_X_L=0x14;  //GYR_X<7:0>
+// const int GYR_X_H=0x15;  //GYR_X<15:8>
 
 
 //=========================================================
 //Accelerometer and gyro statistical data
-int sample_num = 100;
-float meas_interval = 0.01;
+const int sample_num = 100;
+const float meas_interval = 0.01;
 float theta_mean;
 float theta_variance;
 float theta_dot_mean;
@@ -34,8 +34,8 @@ float theta_dot_variance;
 //=========================================================
 //Kalman filter (for angle estimation) variables
 //Update rate
-float theta_update_freq = 400; //Hz
-float theta_update_interval = 1.0f/theta_update_freq;
+const float theta_update_freq = 400; //Hz
+const float theta_update_interval = 1.0f/theta_update_freq;
 //State vector
 //[[theta(degree)], [offset of theta_dot(degree/sec)]]
 float theta_data_predict[2][1];
@@ -393,8 +393,8 @@ void update_theta(int bus)
 int main(int argc, char **argv) {
     ros::init(argc, argv, "bno055_kalman_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
-    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
+    ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
+    ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 1);
     
     //I2C setting
     int bus = i2cOpen(0, BNO055_ADDR, 0);
@@ -412,6 +412,20 @@ int main(int argc, char **argv) {
     P_theta_predict[1][0] = 0;
     P_theta_predict[1][1] = theta_dot_variance;
     
+    std_msgs::Float64 c_var_msg;
+    c_var_msg.data = theta_variance;
+    imu_pub1.publish(c_var_msg);
+    
+    std_msgs::Float64 cdot_var_msg;
+    cdot_var_msg.data = theta_dot_variance;
+    imu_pub1.publish(cdot_var_msg);
+    
+    var_pub1.shutdown();
+    var_pub2.shutdown();
+
+    ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
+    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
+
     ros::Rate rate(theta_update_freq);  // パブリッシュの頻度を設定 (4000 Hz)
 
     float theta1dot_temp;
@@ -419,11 +433,11 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         update_theta(bus);
         theta1dot_temp = get_gyro_data(bus);
-        std_msgs::Float64 imu_msg;
-        imu_msg.data = theta_data;
-        imu_pub.publish(imu_msg);
+        std_msgs::Float64 imu_msg1;
+        imu_msg1.data = theta_data[0][0];
+        imu_pub.publish(imu_msg1);
         std_msgs::Float64 imu_msg2;
-        imu_msg2.data = theta1dot_temp;
+        imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
 
         ROS_INFO("Publish theta1 from BNO055: %d", imu_msg.data);

@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <iostream>
 
+
 int main() {
     // Initialize pigpio
     if (gpioInitialise() < 0) {

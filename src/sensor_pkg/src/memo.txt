@@ -53,3 +53,50 @@ float pre_theta2 = 0;
 //function
 //update encoder_value, table
 rotary_encoder(global(table,encoder_value));
+
+driver check
+
+global
+
+const int ENC_IN1 = 17;   // Motor driver input 1
+const int ENC_IN2 = 27;   // Motor driver input 2
+const int ENC_PWM = 18; // Motor driver PWM input
+
+int rotary_encoder_resolution = 100;
+float theta_variance;
+float theta_dot_variance;
+float theta_data;
+float theta_dot_data;
+float theta2_data;
+
+//=========================================================
+//Kalman filter (for all system estimation) variables
+float x_data_predict[4][1];
+float x_data[4][1];
+float P_x_predict[4][4];
+float P_x[4][4];
+float A_x[4][4] = {{1.00210e+00,1.00070e-02,0.00000e+00,3.86060e-05},{4.20288e-01,1.00210e+00,0.00000e+00,7.65676e-03},{-1.15751e-03,-3.87467e-06,1.00000e+00,9.74129e-03},{-2.29569e-01,-1.15751e-03,0.00000e+00,9.48707e-01}};
+float B_x[4][1] = {{-2.70805e-04},{-5.37090e-02},{1.81472e-03},{3.59797e-01}};
+float C_x[4][4] = {{1, 0, 0, 0},{0, 1, 0, 0},{0, 0, 1, 0},{0, 0, 0, 1}};
+float measure_variance_mat[4][4];
+float voltage_error = 0.01; //volt
+float voltage_variance = voltage_error * voltage_error;
+
+//=========================================================
+//Motor control variables
+float feedback_rate = 0.01; //sec
+float motor_value = 0;
+int pwm_duty = 0;
+int motor_direction = 1;
+float motor_offset = 0.17; //volt
+
+//=========================================================
+//Gain vector for the state feedback 
+//(R=1000, Q = diag(1, 1, 10, 10), f=100Hz)
+float Gain[4] = {29.87522919, 4.59857246, 0.09293, 0.37006248};
+
+
+
+//=========================================================
+//function
+void Kalman_main(float y, global(C_x,))

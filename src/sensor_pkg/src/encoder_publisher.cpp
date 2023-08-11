@@ -5,12 +5,12 @@
 
 //=========================================================
 //Rotary encoder variables
-int pin1 = 18;  // to A
-int pin2 = 16;  // to B
-int rotary_encoder_frequency = 40000; //usec
-int rotary_encoder_resolution = 100;
+const int pin1 = 18;  // to A
+const int pin2 = 16;  // to B
+const int rotary_encoder_frequency = 40000; //usec
+const int rotary_encoder_resolution = 100;
+const int table[16] = {0, 1, -1, 0,  -1, 0, 0, 1,  1, 0, 0, -1,  0, -1, 1, 0};
 int encoder_value = 0;
-int table[16] = {0, 1, -1, 0,  -1, 0, 0, 1,  1, 0, 0, -1,  0, -1, 1, 0};
 
 void rotary_encoder()
 {  
@@ -26,7 +26,7 @@ void rotary_encoder()
 int main() {
     ros::init(argc, argv, "encoder_publisher");
     ros::NodeHandle nh;
-    ros::Publisher imu_pub = nh.advertise<std_msgs::Float64>("theta2_topic", 1);
+    ros::Publisher enc_pub = nh.advertise<std_msgs::Float64>("theta2_topic", 1);
 
     if (gpioInitialise() < 0) {
         std::cerr << "pigpio initialization failed." << std::endl;
@@ -48,10 +48,10 @@ int main() {
     while (ros::ok()) {
         rotary_encoder();
         theta2_data = encoder_value * (2 * 3.14f) / (4 * rotary_encoder_resolution);
-        std_msgs::Float64 imu_msg;
-        imu_msg.data = theta_data2;
-        imu_pub.publish(imu_msg);
-        ROS_INFO("Published from encoder: %d", imu_msg.data);
+        std_msgs::Float64 enc_msg;
+        enc_msg.data = theta2_data;
+        enc_pub.publish(enc_msg);
+        ROS_INFO("Published from encoder: %d", enc_msg.data);
         rate.sleep();
     }
 
