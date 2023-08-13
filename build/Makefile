@@ -285,6 +285,19 @@ gtest/fast:
 .PHONY : gtest/fast
 
 #=============================================================================
+# Target rules for targets named encoder_publisher
+
+# Build rule for target.
+encoder_publisher: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 encoder_publisher
+.PHONY : encoder_publisher
+
+# fast build rule for target.
+encoder_publisher/fast:
+	$(MAKE) -f sensor_pkg/CMakeFiles/encoder_publisher.dir/build.make sensor_pkg/CMakeFiles/encoder_publisher.dir/build
+.PHONY : encoder_publisher/fast
+
+#=============================================================================
 # Target rules for targets named std_msgs_generate_messages_py
 
 # Build rule for target.
@@ -309,19 +322,6 @@ std_msgs_generate_messages_nodejs: cmake_check_build_system
 std_msgs_generate_messages_nodejs/fast:
 	$(MAKE) -f sensor_pkg/CMakeFiles/std_msgs_generate_messages_nodejs.dir/build.make sensor_pkg/CMakeFiles/std_msgs_generate_messages_nodejs.dir/build
 .PHONY : std_msgs_generate_messages_nodejs/fast
-
-#=============================================================================
-# Target rules for targets named bmx055_publisher
-
-# Build rule for target.
-bmx055_publisher: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 bmx055_publisher
-.PHONY : bmx055_publisher
-
-# fast build rule for target.
-bmx055_publisher/fast:
-	$(MAKE) -f sensor_pkg/CMakeFiles/bmx055_publisher.dir/build.make sensor_pkg/CMakeFiles/bmx055_publisher.dir/build
-.PHONY : bmx055_publisher/fast
 
 #=============================================================================
 # Target rules for targets named roscpp_generate_messages_cpp
@@ -374,6 +374,19 @@ std_msgs_generate_messages_lisp: cmake_check_build_system
 std_msgs_generate_messages_lisp/fast:
 	$(MAKE) -f sensor_pkg/CMakeFiles/std_msgs_generate_messages_lisp.dir/build.make sensor_pkg/CMakeFiles/std_msgs_generate_messages_lisp.dir/build
 .PHONY : std_msgs_generate_messages_lisp/fast
+
+#=============================================================================
+# Target rules for targets named bno055_kalman_publisher
+
+# Build rule for target.
+bno055_kalman_publisher: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 bno055_kalman_publisher
+.PHONY : bno055_kalman_publisher
+
+# fast build rule for target.
+bno055_kalman_publisher/fast:
+	$(MAKE) -f sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build.make sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build
+.PHONY : bno055_kalman_publisher/fast
 
 #=============================================================================
 # Target rules for targets named roscpp_generate_messages_py
@@ -514,13 +527,14 @@ help:
 	@echo "... gmock"
 	@echo "... gtest_main"
 	@echo "... gtest"
+	@echo "... encoder_publisher"
 	@echo "... std_msgs_generate_messages_py"
 	@echo "... std_msgs_generate_messages_nodejs"
-	@echo "... bmx055_publisher"
 	@echo "... roscpp_generate_messages_cpp"
 	@echo "... roscpp_generate_messages_eus"
 	@echo "... rosgraph_msgs_generate_messages_nodejs"
 	@echo "... std_msgs_generate_messages_lisp"
+	@echo "... bno055_kalman_publisher"
 	@echo "... roscpp_generate_messages_py"
 	@echo "... std_msgs_generate_messages_eus"
 	@echo "... roscpp_generate_messages_nodejs"

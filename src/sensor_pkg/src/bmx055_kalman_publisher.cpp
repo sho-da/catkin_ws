@@ -247,7 +247,7 @@ void accl_init(int bus)
     theta_mean = 0;
     for(int i=0; i<sample_num; i++)
     {
-            theta_mean += theta_array[i];
+        theta_mean += theta_array[i];
     }
     theta_mean /= sample_num;
     
@@ -256,8 +256,8 @@ void accl_init(int bus)
     theta_variance = 0;
     for(int i=0; i<sample_num; i++)
     {
-            temp = theta_array[i] - theta_mean;
-            theta_variance += temp*temp;
+        temp = theta_array[i] - theta_mean;
+        theta_variance += temp*temp;
     }
     theta_variance /= sample_num;
     return;
@@ -383,8 +383,8 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "bmx055_kalman_publisher");
     ros::NodeHandle nh;
-    ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
-    ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 1);
+    ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 10);
+    ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 10);
 
     //I2C setting
     int bus_accl = i2c_open(pi, 1, ACCL_ADDR, 0);
@@ -411,17 +411,23 @@ int main(int argc, char **argv) {
     cdot_var_msg.data = theta_dot_variance;
     var_pub2.publish(cdot_var_msg);
     
-    var_pub1.shutdown();
-    var_pub2.shutdown();
+    //var_pub1.shutdown();
+    //var_pub2.shutdown();
 
-    ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
-    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
+    ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 10);
+    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 10);
 
     ros::Rate rate(400);  // パブリッシュの頻度を設定 (400 Hz)
 
     float theta1dot_temp;
     int count=0;
     while (ros::ok()) {
+        std_msgs::Float64 c_var_msg;
+        c_var_msg.data = theta_variance;
+        var_pub1.publish(c_var_msg);
+        std_msgs::Float64 cdot_var_msg;
+        cdot_var_msg.data = theta_dot_variance;
+        var_pub2.publish(cdot_var_msg);
         update_theta(bus_accl, bus_gyro);
         theta1dot_temp = get_gyro_data(bus_gyro);
         std_msgs::Float64 imu_msg1;
@@ -430,6 +436,7 @@ int main(int argc, char **argv) {
         std_msgs::Float64 imu_msg2;
         imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
+
         count += 1;
         if (count % 100 == 0){
             ROS_INFO("Publish theta1 from BMX055: %f", imu_msg1.data);

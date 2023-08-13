@@ -2,11 +2,17 @@
 #include <std_msgs/Float64.h>
 #include <cmath>
 #include <unistd.h>
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
-const int ENC_IN1 = 17;   // Motor driver input 1
-const int ENC_IN2 = 27;   // Motor driver input 2
-const int ENC_PWM = 18; // Motor driver PWM input
+const int IN1 = 6;   // Motor driver input 1
+const int IN2 = 5;   // Motor driver input 2
+const int PWM = 12; // Motor driver PWM input
+
+const int LED_R = 17;
+const int LED_Y = 22;
+const int LED_G = 27;
+
+int pi3;
 
 int rotary_encoder_resolution = 100;
 float theta_variance;
@@ -35,7 +41,7 @@ float A_x[4][4] = {
 //"B" of the state equation (update freq = 100 Hz)
 float B_x[4][1] = {{-2.70805e-04},{-5.37090e-02},{1.81472e-03},{3.59797e-01}};
 //"C" of the state equation (update freq = 100 Hz)
-const float C_x[4][4] = {{1, 0, 0, 0},{0, 1, 0, 0},{0, 0, 1, 0},{0, 0, 0, 1}};
+float C_x[4][4] = {{1, 0, 0, 0},{0, 1, 0, 0},{0, 0, 1, 0},{0, 0, 0, 1}};
 //measurement noise
 float measure_variance_mat[4][4];
 //System noise
@@ -265,33 +271,44 @@ void Kalman_main(){
 //callback関数の宣言
 void callback_cvar(const std_msgs::Float64::ConstPtr& c_var_msg)
 {
-    theta_variance = c_var_msg->theta_variance;
-    ROS_INFO("Received theta_variance: %d", theta_variance);
+    theta_variance = c_var_msg->data;
+    ROS_INFO("Received theta_variance: %f", theta_variance);
 }
 void callback_cdotvar(const std_msgs::Float64::ConstPtr& cdot_var_msg)
 {
-    theta_dot_variance = cdot_var_msg->theta_data_variance;
-    ROS_INFO("Received theta_variance: %d", theta_dot_variance);
+    theta_dot_variance = cdot_var_msg->data;
+    ROS_INFO("Received theta_variance: %f", theta_dot_variance);
 }
 void callback_imu1(const std_msgs::Float64::ConstPtr& imu_msg1)
 {
-    theta_data = imu_msg1->theta_data;
-    ROS_INFO("Received theta1: %d", theta_data);
+    theta_data = imu_msg1->data;
+    //ROS_INFO("Received theta1: %f", theta_data);
 }
 void callback_imu2(const std_msgs::Float64::ConstPtr& imu_msg2)
 {
-    theta_dot_data = imu_msg->theta_dot_data;
-    ROS_INFO("Received theta1dot: %d", theta_dot_data);
+    theta_dot_data = imu_msg2->data;
+    //ROS_INFO("Received theta1dot: %f", theta_dot_data);
 }
 void callback_enc(const std_msgs::Float64::ConstPtr& enc_msg)
 {
-    theta2_data = enc_msg->theta2_data
-    ROS_INFO("Received theta2: %d", theta2_data);
+    theta2_data = enc_msg->data;
+    //ROS_INFO("Received theta2: %f", theta2_data);
 }
 
 
 int main(int argc, char** argv)
 {
+    pi3 = pigpio_start(NULL,NULL);
+
+    set_mode(pi3,LED_R,PI_OUTPUT);
+    set_mode(pi3,LED_Y,PI_OUTPUT);
+    set_mode(pi3,LED_G,PI_OUTPUT);
+    gpio_write(pi3,LED_R,1);
+    gpio_write(pi3,LED_Y,1);
+    gpio_write(pi3,LED_G,1);
+    sleep(1);
+    gpio_write(pi3,LED_R,0);
+    gpio_write(pi3,LED_G,0);
     //-------------------------------------------
     //Kalman filter (all system) variables
     //------------------------------------------- 
@@ -350,8 +367,6 @@ int main(int argc, char** argv)
     ros::Subscriber imu_sub2 = nh.subscribe("theta1dot_temp_topic", 1, callback_imu2);
     ros::Subscriber enc_sub  = nh.subscribe("theta2_topic", 1, callback_enc);
     ros::spinOnce();
-    var_sub1.shutdown();
-    var_sub2.shutdown();
 
     float deg_rad_coeff = (3.14*3.14)/(180*180);
     measure_variance_mat[0][0] = theta_variance * deg_rad_coeff;
@@ -364,12 +379,18 @@ int main(int argc, char** argv)
     ros::Rate rate(1429);  // サブスクライブの頻度を設定 (1429 Hz) 7oo usec
 
     int pwm_frequency = 10000; // 10 kHz
-    gpioSetMode(ENC_IN1, PI_OUTPUT);
-    gpioSetMode(ENC_IN2, PI_OUTPUT);
-    gpioSetMode(ENC_PWM, PI_OUTPUT);
-    gpioSetPWMfrequency(ENC_PWM, pwm_frequency);
+    int pwm_duty;
+    set_mode(pi3,IN1, PI_OUTPUT);
+    set_mode(pi3,IN2, PI_OUTPUT);
+    set_mode(pi3,PWM, PI_OUTPUT);
+    set_PWM_frequency(pi3,PWM, pwm_frequency);
+
+    gpio_write(pi3,LED_Y,0);
 
     while (ros::ok()) {
+        gpio_write(pi3,LED_Y,1);
+        gpio_write(pi3,LED_G,0);
+        gpio_write(pi3,LED_R,0);
         ros::spinOnce();
         y[0][0] = theta_data * 3.14f/180;
         y[1][0] = theta_dot_data;
@@ -435,19 +456,21 @@ int main(int argc, char** argv)
             if(pwm_duty>255)
             {
                 pwm_duty = 255;    
-            }         
+            }
             //to protect TA7291P
             if(motor_direction == 2)
             {
-                gpioWrite(ENC_IN1, 0);
-                gpioWrite(ENC_IN2, 0);
-                usleep(100);    
+                gpio_write(pi3,IN1, 0);
+                gpio_write(pi3,IN2, 0);
+                usleep(100);
             }        
             //forward
-            gpioWrite(ENC_IN1, 1);
-            gpioWrite(ENC_IN2, 0);
-            led_g = 1;
-            gpioPWM(ENC_PWM, pwm_duty);
+            set_PWM_dutycycle(pi3,PWM, pwm_duty);
+            gpio_write(pi3,IN1, 1);
+            gpio_write(pi3,IN2, 0);
+            gpio_write(pi3,LED_Y,0);
+            gpio_write(pi3,LED_G,1);
+            set_PWM_dutycycle(pi3,PWM, pwm_duty);
             motor_direction = 1;
         }      
         //drive the motor in reverse
@@ -464,18 +487,27 @@ int main(int argc, char** argv)
             //to protect TA7291P
             if(motor_direction == 1)
             {
-                gpioWrite(ENC_IN1, 0);
-                gpioWrite(ENC_IN2, 0);
+                gpio_write(pi3,IN1, 0);
+                gpio_write(pi3,IN2, 0);
                 usleep(100); //wait 100 usec    
             }
             //reverse
-            gpioWrite(ENC_IN1, 0);
-            gpioWrite(ENC_IN2, 1);
-            led_r = 1;
-            gpioPWM(ENC_PWM, pwm_duty);
+            gpio_write(pi3,IN1, 0);
+            gpio_write(pi3,IN2, 1);
+            gpio_write(pi3,LED_Y,0);
+            gpio_write(pi3,LED_R,1);
+            set_PWM_dutycycle(pi3,PWM, pwm_duty);
             motor_direction = 2;          
         }
         rate.sleep();
     }
+    gpio_write(pi3,IN1, 0);
+    gpio_write(pi3,IN2, 0);
+    gpio_write(pi3,LED_R,0);
+    gpio_write(pi3,LED_G,0);
+    gpio_write(pi3,LED_Y,0);
+    pigpio_stop(pi3);
+
+    return 0;
 }
 
