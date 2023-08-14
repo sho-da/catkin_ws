@@ -7,7 +7,8 @@
 //Rotary encoder variables
 const int pin1 = 23;  // to A
 const int pin2 = 24;  // to B
-const int rotary_encoder_frequency = 40000; //usec
+
+const int rotary_encoder_frequency = 40000; //hz
 const int rotary_encoder_resolution = 100;
 const int table[16] = {0, 1, -1, 0,  -1, 0, 0, 1,  1, 0, 0, -1,  0, -1, 1, 0};
 int encoder_value = 0;
@@ -28,7 +29,7 @@ void rotary_encoder()
 int main(int argc, char **argv) {
     ros::init(argc, argv, "encoder_publisher");
     ros::NodeHandle nh;
-    ros::Publisher enc_pub = nh.advertise<std_msgs::Float64>("theta2_topic", 1);
+    ros::Publisher enc_pub = nh.advertise<std_msgs::Float64>("theta2_topic", 10);
 
     pi2=pigpio_start(NULL,NULL);
 
@@ -51,7 +52,7 @@ int main(int argc, char **argv) {
         std_msgs::Float64 enc_msg;
         enc_msg.data = theta2_data;
         enc_pub.publish(enc_msg);
-        ROS_INFO("Published from encoder: %f", enc_msg.data);
+        ROS_INFO("Published from rotary encoder: %f", enc_msg.data);
         rate.sleep();
     }
 
