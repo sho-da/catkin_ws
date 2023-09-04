@@ -1,96 +1,24 @@
-%%
-%% IEEEtran.bst
-%% BibTeX Bibliography Style file for IEEE Journals and Conferences (unsorted)
-%% Version 1.14 (2015/08/26)
-%% 
-%% Copyright (c) 2003-2015 Michael Shell
-%% 
-%% Original starting code base and algorithms obtained from the output of
-%% Patrick W. Daly's makebst package as well as from prior versions of
-%% IEEE BibTeX styles:
-%% 
-%% 1. Howard Trickey and Oren Patashnik's ieeetr.bst  (1985/1988)
-%% 2. Silvano Balemi and Richard H. Roy's IEEEbib.bst (1993)
-%% 
-%% Support sites:
-%% http://www.michaelshell.org/tex/ieeetran/
-%% http://www.ctan.org/pkg/ieeetran
-%% and/or
-%% http://www.ieee.org/
-%% 
-%% For use with BibTeX version 0.99a or later
-%%
-%% This is a numerical citation style.
-%% 
-%%*************************************************************************
-%% Legal Notice:
-%% This code is offered as-is without any warranty either expressed or
-%% implied; without even the implied warranty of MERCHANTABILITY or
-%% FITNESS FOR A PARTICULAR PURPOSE! 
-%% User assumes all risk.
-%% In no event shall the IEEE or any contributor to this code be liable for
-%% any damages or losses, including, but not limited to, incidental,
-%% consequential, or any other damages, resulting from the use or misuse
-%% of any information contained here.
-%%
-%% All comments are the opinions of their respective authors and are not
-%% necessarily endorsed by the IEEE.
-%%
-%% This work is distributed under the LaTeX Project Public License (LPPL)
-%% ( http://www.latex-project.org/ ) version 1.3, and may be freely used,
-%% distributed and modified. A copy of the LPPL, version 1.3, is included
-%% in the base LaTeX documentation of all distributions of LaTeX released
-%% 2003/12/01 or later.
-%% Retain all contribution notices and credits.
-%% ** Modified files should be clearly indicated as such, including  **
-%% ** renaming them and changing author support contact information. **
-%%*************************************************************************
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% DEFAULTS FOR THE CONTROLS OF THE BST STYLE %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% These are the defaults for the user adjustable controls. The values used
-% here can be overridden by the user via IEEEtranBSTCTL entry type.
-
-% NOTE: The recommended LaTeX command to invoke a control entry type is:
-% 
-%\makeatletter
-%\def\bstctlcite{\@ifnextchar[{\@bstctlcite}{\@bstctlcite[@auxout]}}
-%\def\@bstctlcite[#1]#2{\@bsphack
-%  \@for\@citeb:=#2\do{%
-%    \edef\@citeb{\expandafter\@firstofone\@citeb}%
-%    \if@filesw\immediate\write\csname #1\endcsname{\string\citation{\@citeb}}\fi}%
-%  \@esphack}
-%\makeatother
-%
-% It is called at the start of the document, before the first \cite, like:
-% \bstctlcite{IEEEexample:BSTcontrol}
-%
-% IEEEtran.cls V1.6 and later does provide this command.
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This file is a bib compiler for IAC.
+% This file is based on ieeetran.bst.
+% https://ftp.kddilabs.jp/CTAN/macros/latex/contrib/IEEEtran/bibtex/IEEEtran.bst
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % #0 turns off the display of the number for articles.
 % #1 enables
 FUNCTION {default.is.use.number.for.article} { #1 }
 
-
 % #0 turns off the display of the paper and type fields in @inproceedings.
 % #1 enables
+
 FUNCTION {default.is.use.paper} { #1 }
-
-
 % #0 turns off the display of urls
 % #1 enables
 FUNCTION {default.is.use.url} { #1 }
 
-
 % #0 turns off the forced use of "et al."
 % #1 enables
 FUNCTION {default.is.forced.et.al} { #0 }
-
 
 % The maximum number of names that can be present beyond which an "et al."
 % usage is forced. Be sure that num.names.shown.with.forced.et.al (below)
@@ -100,16 +28,13 @@ FUNCTION {default.is.forced.et.al} { #0 }
 % used profusely.
 FUNCTION {default.max.num.names.before.forced.et.al} { #10 }
 
-
 % The number of names that will be shown with a forced "et al.".
 % Must be less than or equal to max.num.names.before.forced.et.al
 FUNCTION {default.num.names.shown.with.forced.et.al} { #1 }
 
-
 % #0 turns off the alternate interword spacing for entries with URLs.
 % #1 enables
 FUNCTION {default.is.use.alt.interword.spacing} { #1 }
-
 
 % If alternate interword spacing for entries with URLs is enabled, this is
 % the interword spacing stretch factor that will be used. For example, the
@@ -129,7 +54,7 @@ FUNCTION {default.is.dash.repeated.names} { #1 }
 
 
 % The default name format control string.
-FUNCTION {default.name.format.string}{ "{f.~}{vv~}{ll}{, jj}" }
+FUNCTION {default.name.format.string}{ "{f{.}.~}{vv~}{ll}{ jj}" }
 
 
 % The default LaTeX font command for the names.
@@ -137,7 +62,7 @@ FUNCTION {default.name.latex.cmd}{ "" }
 
 
 % The default URL prefix.
-FUNCTION {default.name.url.prefix}{ "[Online]. Available:" }
+FUNCTION {default.name.url.prefix}{ "" }
 
 
 % Other controls that cannot be accessed via IEEEtranBSTCTL entry type.
@@ -148,49 +73,11 @@ FUNCTION {default.name.url.prefix}{ "[Online]. Available:" }
 FUNCTION {is.print.banners.to.terminal} { #1 }
 
 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% FILE VERSION AND BANNER %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-FUNCTION{bst.file.version} { "1.14" }
-FUNCTION{bst.file.date} { "2015/08/26" }
-FUNCTION{bst.file.website} { "http://www.michaelshell.org/tex/ieeetran/bibtex/" }
-
-FUNCTION {banner.message}
-{ is.print.banners.to.terminal
-     { "-- IEEEtran.bst version" " " * bst.file.version *
-       " (" * bst.file.date * ") " * "by Michael Shell." *
-       top$
-       "-- " bst.file.website *
-       top$
-       "-- See the " quote$ * "IEEEtran_bst_HOWTO.pdf" * quote$ * " manual for usage information." *
-       top$
-     }
-     { skip$ }
-   if$
-}
-
-FUNCTION {completed.message}
-{ is.print.banners.to.terminal
-     { ""
-       top$
-       "Done."
-       top$
-     }
-     { skip$ }
-   if$
-}
-
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%
 %% STRING CONSTANTS %%
 %%%%%%%%%%%%%%%%%%%%%%
 
-FUNCTION {bbl.and}{ "and" }
+% FUNCTION {bbl.and}{ "and" } % 著者が二人以上いる場合，A. Mike, B. Jon and C. Kenになる．
 FUNCTION {bbl.etal}{ "et~al." }
 FUNCTION {bbl.editors}{ "eds." }
 FUNCTION {bbl.editor}{ "ed." }
@@ -306,7 +193,6 @@ ENTRY
 
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%
 %% INTEGER VARIABLES %%
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -348,9 +234,6 @@ STRINGS { bibinfo
           name.latex.cmd
           name.url.prefix}
 
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %% LOW LEVEL FUNCTIONS %%
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -369,79 +252,6 @@ FUNCTION {initialize.controls}
   default.name.latex.cmd 'name.latex.cmd :=
   default.name.url.prefix 'name.url.prefix :=
 }
-
-
-% This IEEEtran.bst features a very powerful and flexible mechanism for
-% controlling the capitalization, punctuation, spacing, quotation, and
-% newlines of the formatted entry fields. (Note: IEEEtran.bst does not need
-% or use the newline/newblock feature, but it has been implemented for
-% possible future use.) The output states of IEEEtran.bst consist of
-% multiple independent attributes and, as such, can be thought of as being
-% vectors, rather than the simple scalar values ("before.all", 
-% "mid.sentence", etc.) used in most other .bst files.
-% 
-% The more flexible and complex design used here was motivated in part by
-% the IEEE's rather unusual bibliography style. For example, the IEEE ends the
-% previous field item with a period and large space prior to the publisher
-% address; the @electronic entry types use periods as inter-item punctuation
-% rather than the commas used by the other entry types; and URLs are never
-% followed by periods even though they are the last item in the entry.
-% Although it is possible to accommodate these features with the conventional
-% output state system, the seemingly endless exceptions make for convoluted,
-% unreliable and difficult to maintain code.
-%
-% IEEEtran.bst's output state system can be easily understood via a simple
-% illustration of two most recently formatted entry fields (on the stack):
-%
-%               CURRENT_ITEM
-%               "PREVIOUS_ITEM
-%
-% which, in this example, is to eventually appear in the bibliography as:
-% 
-%               "PREVIOUS_ITEM," CURRENT_ITEM
-%
-% It is the job of the output routine to take the previous item off of the
-% stack (while leaving the current item at the top of the stack), apply its
-% trailing punctuation (including closing quote marks) and spacing, and then
-% to write the result to BibTeX's output buffer:
-% 
-%               "PREVIOUS_ITEM," 
-% 
-% Punctuation (and spacing) between items is often determined by both of the
-% items rather than just the first one. The presence of quotation marks
-% further complicates the situation because, in standard English, trailing
-% punctuation marks are supposed to be contained within the quotes.
-% 
-% IEEEtran.bst maintains two output state (aka "status") vectors which
-% correspond to the previous and current (aka "this") items. Each vector
-% consists of several independent attributes which track punctuation,
-% spacing, quotation, and newlines. Capitalization status is handled by a
-% separate scalar because the format routines, not the output routine,
-% handle capitalization and, therefore, there is no need to maintain the
-% capitalization attribute for both the "previous" and "this" items.
-% 
-% When a format routine adds a new item, it copies the current output status
-% vector to the previous output status vector and (usually) resets the
-% current (this) output status vector to a "standard status" vector. Using a
-% "standard status" vector in this way allows us to redefine what we mean by
-% "standard status" at the start of each entry handler and reuse the same
-% format routines under the various inter-item separation schemes. For
-% example, the standard status vector for the @book entry type may use
-% commas for item separators, while the @electronic type may use periods,
-% yet both entry handlers exploit many of the exact same format routines.
-% 
-% Because format routines have write access to the output status vector of
-% the previous item, they can override the punctuation choices of the
-% previous format routine! Therefore, it becomes trivial to implement rules
-% such as "Always use a period and a large space before the publisher." By
-% pushing the generation of the closing quote mark to the output routine, we
-% avoid all the problems caused by having to close a quote before having all
-% the information required to determine what the punctuation should be.
-%
-% The IEEEtran.bst output state system can easily be expanded if needed.
-% For instance, it is easy to add a "space.tie" attribute value if the
-% bibliography rules mandate that two items have to be joined with an
-% unbreakable space. 
 
 FUNCTION {initialize.status.constants}
 { #0 'punct.no :=
@@ -757,7 +567,7 @@ FUNCTION {either.or.check}
 }
 
 FUNCTION {empty.entry.warn}
-{ author empty$ title empty$ howpublished empty$
+{ author empty$ title empty$
   month empty$ year empty$ note empty$ url empty$
   and and and and and and
     { "all relevant fields are empty in " cite$ * warning$ }
@@ -1147,57 +957,6 @@ FUNCTION {longest.label.pass}
 
 %% Lower Level Formats (used by higher level formats)
 
-FUNCTION {format.address.org.or.pub.date}
-{ 't :=
-  ""
-  year empty$
-    { "empty year in " cite$ * warning$ }
-    { skip$ }
-  if$
-  address empty$ t empty$ and
-  year empty$ and month empty$ and
-    { skip$ }
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-      address "address" bibinfo.check *
-      t empty$
-        { skip$ }
-        { punct.period 'prev.status.punct :=
-          space.large 'prev.status.space :=
-          address empty$
-            { skip$ }
-            { ": " * }
-          if$
-          t *
-        }
-      if$
-      year empty$ month empty$ and
-        { skip$ }
-        { t empty$ address empty$ and
-            { skip$ }
-            { ", " * }
-          if$
-          month empty$
-            { year empty$
-                { skip$ }
-                { year "year" bibinfo.check * }
-              if$
-            }
-            { month "month" bibinfo.check *
-              year empty$
-                 { skip$ }
-                 { " " * year "year" bibinfo.check * }
-              if$
-            }
-          if$
-        }
-      if$
-    }
-  if$
-}
-
-
 FUNCTION {format.names}
 { 'bibinfo :=
   duplicate$ empty$ 'skip$ {
@@ -1252,26 +1011,7 @@ FUNCTION {format.names}
   } if$
 }
 
-
-
-
-%% Higher Level Formats
-
-%% addresses/locations
-
-FUNCTION {format.address}
-{ address duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-    }
-  if$
-}
-
-
-
 %% author/editor names
-
 FUNCTION {format.authors}{ author "author" format.names }
 
 FUNCTION {format.editors}
@@ -1314,130 +1054,50 @@ FUNCTION {format.date}
   if$
 }
 
-FUNCTION {format.date.electronic}
-{ month "month" bibinfo.check duplicate$ empty$
-  year  "year" bibinfo.check duplicate$ empty$
-    { swap$ 
-        { pop$ }
-        { "there's a month but no year in " cite$ * warning$
-        pop$ ")" * "(" swap$ *
-        this.to.prev.status
-        punct.no 'this.status.punct :=
-        space.normal 'this.status.space :=
-        quote.no 'this.status.quote :=
-        cap.yes  'status.cap :=
-        }
-      if$
-    }
-    { swap$ 
-        { swap$ pop$ ")" * "(" swap$ * }
-        { "(" swap$ * ", " * swap$ * ")" * }
-      if$
-    this.to.prev.status
-    punct.no 'this.status.punct :=
-    space.normal 'this.status.space :=
-    quote.no 'this.status.quote :=
-    cap.yes  'status.cap :=
-    }
-  if$
-}
-
-
-
-%% edition/title
-
-% Note: The IEEE considers the edition to be closely associated with
-% the title of a book. So, in IEEEtran.bst the edition is normally handled 
-% within the formatting of the title. The format.edition function is 
-% retained here for possible future use.
-FUNCTION {format.edition}
-{ edition duplicate$ empty$ 'skip$
+FUNCTION {format.booktitle}
+{ booktitle duplicate$ empty$ 'skip$
     { this.to.prev.status
       this.status.std
-      convert.edition
-      status.cap
-        { "t" }
-        { "l" }
-      if$ change.case$
-      "edition" bibinfo.check
-      "~" * bbl.edition *
-      cap.status.std
     }
   if$
-}
-
-% This is used to format the booktitle of a conference proceedings.
-% Here we use the "intype" field to provide the user a way to 
-% override the word "in" (e.g., with things like "presented at")
-% Use of intype stops the emphasis of the booktitle to indicate that
-% we no longer mean the written conference proceedings, but the
-% conference itself.
-FUNCTION {format.in.booktitle}
-{ booktitle "booktitle" bibinfo.check duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      select.language
-      intype missing$
-        { emphasize
-          bbl.in " " *
-        }
-        { intype " " * }
-      if$
-      swap$ *
-      cap.status.std
-    }
-  if$
-}
-
-% This is used to format the booktitle of collection.
-% Here the "intype" field is not supported, but "edition" is.
-FUNCTION {format.in.booktitle.edition}
-{ booktitle "booktitle" bibinfo.check duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      select.language
-      emphasize
-      edition empty$ 'skip$
-        { ", " *
-          edition
-          convert.edition
-          "l" change.case$
-          * "~" * bbl.edition *
-        }
-      if$
-      bbl.in " " * swap$ *
-      cap.status.std
-    }
-  if$
-}
-
-FUNCTION {format.article.title}
-{ title duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      "t" change.case$
-    }
-  if$
-  "title" bibinfo.check
+  "booktitle" bibinfo.check
   duplicate$ empty$ 'skip$
-    { quote.close 'this.status.quote :=
-      is.last.char.not.punct
+    { is.last.char.not.punct
         { punct.std 'this.status.punct := }
         { punct.no 'this.status.punct := }
       if$
       select.language
-      "``" swap$ *
+      quote.remove
       cap.status.std
     }
   if$
 }
 
-FUNCTION {format.article.title.electronic}
+FUNCTION {format.title}
+{ title duplicate$ empty$ 'skip$
+    { this.to.prev.status
+      this.status.std
+    }
+  if$
+  "title" bibinfo.check
+  duplicate$ empty$ 'skip$
+    { is.last.char.not.punct
+        { punct.std 'this.status.punct := }
+        { punct.no 'this.status.punct := }
+      if$
+      select.language
+      quote.remove
+      cap.status.std
+    }
+  if$
+}
+
+FUNCTION {format.title.electronic}
 { title duplicate$ empty$ 'skip$
     { this.to.prev.status
       this.status.std
       cap.status.std
-      "t" change.case$ 
+      "t" change.case$
     }
   if$
   "title" bibinfo.check
@@ -1447,192 +1107,58 @@ FUNCTION {format.article.title.electronic}
   if$
 }
 
-FUNCTION {format.book.title.edition}
-{ title "title" bibinfo.check
-  duplicate$ empty$
-    { "empty title in " cite$ * warning$ }
+FUNCTION {format.publisher}
+{ publisher duplicate$ empty$ 'skip$
     { this.to.prev.status
       this.status.std
-      select.language
-      emphasize
-      edition empty$ 'skip$
-        { ", " *
-          edition
-          convert.edition
-          status.cap
-            { "t" }
-            { "l" }
-          if$
-          change.case$
-          * "~" * bbl.edition *
-        }
-      if$
-      cap.status.std
+      "t" change.case$
     }
   if$
-}
-
-FUNCTION {format.book.title}
-{ title "title" bibinfo.check
+  "publisher" bibinfo.check
   duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
+    { is.last.char.not.punct
+        { punct.std 'this.status.punct := }
+        { punct.no 'this.status.punct := }
+      if$
       select.language
-      emphasize
+      quote.remove
+      cap.status.std
     }
   if$
 }
-
-
 
 %% journal
-
 FUNCTION {format.journal}
 { journal duplicate$ empty$ 'skip$
     { this.to.prev.status
       this.status.std
       cap.status.std
       select.language
-      emphasize
     }
   if$
 }
 
-
-
-%% how published
-
-FUNCTION {format.howpublished}
-{ howpublished duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-    }
-  if$
-}
-
-
-
-%% institutions/organization/publishers/school
-
-FUNCTION {format.institution}
-{ institution duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-    }
-  if$
-}
-
-FUNCTION {format.organization}
-{ organization duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-    }
-  if$
-}
-
-FUNCTION {format.address.publisher.date}
-{ publisher "publisher" bibinfo.warn format.address.org.or.pub.date }
-
-FUNCTION {format.address.publisher.date.nowarn}
-{ publisher "publisher" bibinfo.check format.address.org.or.pub.date }
-
-FUNCTION {format.address.organization.date}
-{ organization "organization" bibinfo.check format.address.org.or.pub.date }
-
-FUNCTION {format.school}
-{ school duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      cap.status.std
-    }
-  if$
-}
-
-
-
-%% volume/number/series/chapter/pages
-
-FUNCTION {format.volume}
-{ volume empty.field.to.null.string
-  duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      bbl.volume 
-      status.cap
-        { capitalize }
-        { skip$ }
+%% volume/number/pages
+FUNCTION {format.vol.num.pages}
+{ volume boldface field.or.null
+  number empty$
+    'skip$
+    { " (" number * ")" * *
+      volume empty$
+	{ "there's a number but no volume in " cite$ * warning$ }
+	'skip$
       if$
-      swap$ tie.or.space.prefix
-      "volume" bibinfo.check
-      * *
-      cap.status.std
     }
   if$
-}
-
-FUNCTION {format.number}
-{ number empty.field.to.null.string
-  duplicate$ empty$ 'skip$
-    { this.to.prev.status
-      this.status.std
-      status.cap
-         { bbl.number capitalize }
-         { bbl.number }
-       if$
-      swap$ tie.or.space.prefix
-      "number" bibinfo.check
-      * *
-      cap.status.std
-    }
-  if$
-}
-
-FUNCTION {format.number.if.use.for.article}
-{ is.use.number.for.article 
-     { format.number }
-     { "" }
-   if$
-}
-
-% The IEEE does not seem to tie the series so closely with the volume
-% and number as is done in other bibliography styles. Instead the
-% series is treated somewhat like an extension of the title.
-FUNCTION {format.series}
-{ series empty$ 
-   { "" }
-   { this.to.prev.status
-     this.status.std
-     bbl.series " " *
-     series "series" bibinfo.check *
-     cap.status.std
-   }
- if$
-}
-
-
-FUNCTION {format.chapter}
-{ chapter empty$
-    { "" }
-    { this.to.prev.status
-      this.status.std
-      type empty$
-        { bbl.chapter }
-        { type "l" change.case$
-          "type" bibinfo.check
-        }
+  pages empty$
+    'skip$
+    { duplicate$ empty$
+	{ pop$ format.pages }
+	{ " " * pages n.dashify * }
       if$
-      chapter tie.or.space.prefix
-      "chapter" bibinfo.check
-      * *
-      cap.status.std
     }
   if$
 }
-
 
 % The intended use of format.paper is for paper numbers of inproceedings.
 % The paper type can be overridden via the type field.
@@ -1689,236 +1215,34 @@ FUNCTION {format.pages}
   if$
 }
 
-
-
-%% technical report number
-
-FUNCTION {format.tech.report.number}
-{ number "number" bibinfo.check
-  this.to.prev.status
-  this.status.std
-  cap.status.std
-  type duplicate$ empty$
-    { pop$ 
-      bbl.techrep
-    }
-    { skip$ }
-  if$
-  "type" bibinfo.check 
-  swap$ duplicate$ empty$
-    { pop$ }
-    { tie.or.space.prefix * * }
-  if$
-}
-
-
-
 %% note
 
 FUNCTION {format.note}
-{ note empty$
-    { "" }
+{ note duplicate$ empty$ 'skip$
     { this.to.prev.status
       this.status.std
-      punct.period 'this.status.punct :=
-      note #1 #1 substring$
-      duplicate$ "{" =
-        { skip$ }
-        { status.cap
-          { "u" }
-          { "l" }
-        if$
-        change.case$
-        }
-      if$
-      note #2 global.max$ substring$ * "note" bibinfo.check
-      cap.yes  'status.cap :=
-    }
-  if$
-}
-
-
-
-%% patent
-
-FUNCTION {format.patent.date}
-{ this.to.prev.status
-  this.status.std
-  year empty$
-    { monthfiled duplicate$ empty$
-        { "monthfiled" bibinfo.check pop$ "" }
-        { "monthfiled" bibinfo.check }
-      if$
-      dayfiled duplicate$ empty$
-        { "dayfiled" bibinfo.check pop$ "" * }
-        { "dayfiled" bibinfo.check 
-          monthfiled empty$ 
-             { "dayfiled without a monthfiled in " cite$ * warning$
-               * 
-             }
-             { " " swap$ * * }
-           if$
-        }
-      if$
-      yearfiled empty$
-        { "no year or yearfiled in " cite$ * warning$ }
-        { yearfiled "yearfiled" bibinfo.check 
-          swap$
-          duplicate$ empty$
-             { pop$ }
-             { ", " * swap$ * }
-           if$
-        }
-      if$
-    }
-    { month duplicate$ empty$
-        { "month" bibinfo.check pop$ "" }
-        { "month" bibinfo.check }
-      if$
-      day duplicate$ empty$
-        { "day" bibinfo.check pop$ "" * }
-        { "day" bibinfo.check 
-          month empty$ 
-             { "day without a month in " cite$ * warning$
-               * 
-             }
-             { " " swap$ * * }
-           if$
-        }
-      if$
-      year "year" bibinfo.check 
-      swap$
-      duplicate$ empty$
-        { pop$ }
-        { ", " * swap$ * }
-      if$
-    }
-  if$
-  cap.status.std
-}
-
-FUNCTION {format.patent.nationality.type.number}
-{ this.to.prev.status
-  this.status.std
-  nationality duplicate$ empty$
-    { "nationality" bibinfo.warn pop$ "" }
-    { "nationality" bibinfo.check
-      duplicate$ "l" change.case$ "united states" =
-        { pop$ bbl.patentUS }
-        { skip$ }
-      if$
-      " " *
-    }
-  if$
-  type empty$
-    { bbl.patent "type" bibinfo.check }
-    { type "type" bibinfo.check }
-  if$  
-  *
-  number duplicate$ empty$
-    { "number" bibinfo.warn pop$ }
-    { "number" bibinfo.check
-      large.number.separate
-      swap$ " " * swap$ *
-    }
-  if$ 
-  cap.status.std
-}
-
-
-
-%% standard
-
-FUNCTION {format.organization.institution.standard.type.number}
-{ this.to.prev.status
-  this.status.std
-  organization duplicate$ empty$
-    { pop$ 
-      institution duplicate$ empty$
-        { "institution" bibinfo.warn }
-        { "institution" bibinfo.warn " " * }
-      if$
-    }
-    { "organization" bibinfo.warn " " * }
-  if$
-  type empty$
-    { bbl.standard "type" bibinfo.check }
-    { type "type" bibinfo.check }
-  if$  
-  *
-  number duplicate$ empty$
-    { "number" bibinfo.check pop$ }
-    { "number" bibinfo.check
-      large.number.separate
-      swap$ " " * swap$ *
-    }
-  if$ 
-  cap.status.std
-}
-
-FUNCTION {format.revision}
-{ revision empty$
-    { "" }
-    { this.to.prev.status
-      this.status.std
-      bbl.revision
-      revision tie.or.space.prefix
-      "revision" bibinfo.check
-      * *
+      punct.comma 'this.status.punct :=
       cap.status.std
+      select.language
     }
   if$
 }
-
-
-%% thesis
-
-FUNCTION {format.master.thesis.type}
-{ this.to.prev.status
-  this.status.std
-  type empty$
-    {
-      bbl.mthesis
-    }
-    { 
-      type "type" bibinfo.check
-    }
-  if$
-cap.status.std
-}
-
-FUNCTION {format.phd.thesis.type}
-{ this.to.prev.status
-  this.status.std
-  type empty$
-    {
-      bbl.phdthesis
-    }
-    { 
-      type "type" bibinfo.check
-    }
-  if$
-cap.status.std
-}
-
-
 
 %% URL
-
 FUNCTION {format.url}
 { is.use.url
     { url empty$
       { "" }
       { this.to.prev.status
         this.status.std
-        cap.yes 'status.cap :=
+        cap.no 'status.cap :=
         name.url.prefix " " *
         "\url{" * url * "}" *
         punct.no 'this.status.punct :=
-        punct.period 'prev.status.punct :=
         space.normal 'this.status.space :=
         space.normal 'prev.status.space :=
         quote.no 'this.status.quote :=
+        punct.comma 'this.status.punct :=
       }
     if$
     }
@@ -1928,29 +1252,20 @@ FUNCTION {format.url}
 
 
 
-
 %%%%%%%%%%%%%%%%%%%%
 %% ENTRY HANDLERS %%
 %%%%%%%%%%%%%%%%%%%%
-
-
-% Note: In many journals, the IEEE (or the authors) tend not to show the number
-% for articles, so the display of the number is controlled here by the
-% switch "is.use.number.for.article"
 FUNCTION {article}
 { std.status.using.comma
   start.entry
   if.url.alt.interword.spacing
   format.authors "author" output.warn
   name.or.dash
-  format.article.title "title" output.warn
+  format.title "title" output.warn
   format.journal "journal" bibinfo.check "journal" output.warn
-  format.volume output
-  format.number.if.use.for.article output
-  format.pages output
+  format.vol.num.pages output
   format.date "year" output.warn
-  format.note output
-  format.url output
+  format.note "note" bibinfo.check "note" output.warn
   fin.entry
   if.url.std.interword.spacing
 }
@@ -1964,155 +1279,47 @@ FUNCTION {book}
     { format.authors output.nonnull }
   if$
   name.or.dash
-  format.book.title.edition output
-  format.series output
+  format.title "title" output.warn
   author empty$
     { skip$ }
     { format.editors output }
   if$
-  format.address.publisher.date output
-  format.volume output
-  format.number output
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {booklet}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors output
-  name.or.dash
-  format.article.title "title" output.warn
-  format.howpublished "howpublished" bibinfo.check output
-  format.organization "organization" bibinfo.check output
-  format.address "address" bibinfo.check output
-  format.date output
-  format.note output
-  format.url output
+  format.publisher "publisher" output.warn
+  format.vol.num.pages output
+  format.note "note" bibinfo.check "note" output.warn
+  format.date "year" output.warn
   fin.entry
   if.url.std.interword.spacing
 }
 
 FUNCTION {electronic}
-{ std.status.using.period
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors output
-  name.or.dash
-  format.date.electronic output
-  format.article.title.electronic output
-  format.howpublished "howpublished" bibinfo.check output
-  format.organization "organization" bibinfo.check output
-  format.address "address" bibinfo.check output
-  format.note output
-  format.url output
-  fin.entry
-  empty.entry.warn
-  if.url.std.interword.spacing
-}
-
-FUNCTION {inbook}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  author empty$
-    { format.editors "author and editor" output.warn }
-    { format.authors output.nonnull }
-  if$
-  name.or.dash
-  format.book.title.edition output
-  format.series output
-  format.address.publisher.date output
-  format.volume output
-  format.number output
-  format.chapter output
-  format.pages output
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {incollection}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors "author" output.warn
-  name.or.dash
-  format.article.title "title" output.warn
-  format.in.booktitle.edition "booktitle" output.warn
-  format.series output
-  format.editors output
-  format.address.publisher.date.nowarn output
-  format.volume output
-  format.number output
-  format.chapter output
-  format.pages output
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {inproceedings}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors "author" output.warn
-  name.or.dash
-  format.article.title "title" output.warn
-  format.in.booktitle "booktitle" output.warn
-  format.series output
-  format.editors output
-  format.volume output
-  format.number output
-  publisher empty$
-    { format.address.organization.date output }
-    { format.organization "organization" bibinfo.check output
-      format.address.publisher.date output
-    }
-  if$
-  format.paper output
-  format.pages output
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {manual}
 { std.status.using.comma
   start.entry
   if.url.alt.interword.spacing
   format.authors output
   name.or.dash
-  format.book.title.edition "title" output.warn
-  format.howpublished "howpublished" bibinfo.check output 
-  format.organization "organization" bibinfo.check output
-  format.address "address" bibinfo.check output
+  format.title.electronic output
   format.date output
-  format.note output
   format.url output
+  format.note "note" bibinfo.check "note" output.warn
   fin.entry
   if.url.std.interword.spacing
 }
 
-FUNCTION {mastersthesis}
+FUNCTION {proceedings}
 { std.status.using.comma
   start.entry
   if.url.alt.interword.spacing
   format.authors "author" output.warn
   name.or.dash
-  format.article.title "title" output.warn
-  format.master.thesis.type output.nonnull
-  format.school "school" bibinfo.warn output
-  format.address "address" bibinfo.check output
-  format.date "year" output.warn
-  format.note output
+  format.title "title" output.warn
+  format.booktitle "booktitle" output.warn
+  format.editors output
+  format.vol.num.pages output
+  format.paper output
+  format.note "note" bibinfo.check "note" output.warn
   format.url output
+  format.date output
   fin.entry
   if.url.std.interword.spacing
 }
@@ -2123,267 +1330,15 @@ FUNCTION {misc}
   if.url.alt.interword.spacing
   format.authors output
   name.or.dash
-  format.article.title output
-  format.howpublished "howpublished" bibinfo.check output 
-  format.organization "organization" bibinfo.check output
-  format.address "address" bibinfo.check output
+  format.title output
   format.pages output
   format.date output
-  format.note output
+  format.note "note" bibinfo.check "note" output.warn
   format.url output
   fin.entry
   empty.entry.warn
   if.url.std.interword.spacing
 }
-
-FUNCTION {patent}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors output
-  name.or.dash
-  format.article.title output
-  format.patent.nationality.type.number output
-  format.patent.date output
-  format.note output
-  format.url output
-  fin.entry
-  empty.entry.warn
-  if.url.std.interword.spacing
-}
-
-FUNCTION {periodical}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.editors output
-  name.or.dash
-  format.book.title "title" output.warn
-  format.series output
-  format.volume output
-  format.number output
-  format.organization "organization" bibinfo.check output
-  format.date "year" output.warn
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {phdthesis}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors "author" output.warn
-  name.or.dash
-  format.article.title "title" output.warn
-  format.phd.thesis.type output.nonnull
-  format.school "school" bibinfo.warn output
-  format.address "address" bibinfo.check output
-  format.date "year" output.warn
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {proceedings}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.editors output
-  name.or.dash
-  format.book.title "title" output.warn
-  format.series output
-  format.volume output
-  format.number output
-  publisher empty$
-    { format.address.organization.date output }
-    { format.organization "organization" bibinfo.check output
-      format.address.publisher.date output
-    }
-  if$
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {standard}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors output
-  name.or.dash
-  format.book.title "title" output.warn
-  format.howpublished "howpublished" bibinfo.check output 
-  format.organization.institution.standard.type.number output
-  format.revision output
-  format.date output
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {techreport}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors "author" output.warn
-  name.or.dash
-  format.article.title "title" output.warn
-  format.howpublished "howpublished" bibinfo.check output 
-  format.institution "institution" bibinfo.warn output
-  format.address "address" bibinfo.check output
-  format.tech.report.number output.nonnull
-  format.date "year" output.warn
-  format.note output
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-FUNCTION {unpublished}
-{ std.status.using.comma
-  start.entry
-  if.url.alt.interword.spacing
-  format.authors "author" output.warn
-  name.or.dash
-  format.article.title "title" output.warn
-  format.date output
-  format.note "note" output.warn
-  format.url output
-  fin.entry
-  if.url.std.interword.spacing
-}
-
-
-% The special entry type which provides the user interface to the
-% BST controls
-FUNCTION {IEEEtranBSTCTL}
-{ is.print.banners.to.terminal
-    { "** IEEEtran BST control entry " quote$ * cite$ * quote$ * " detected." *
-      top$
-    }
-    { skip$ }
-  if$
-  CTLuse_article_number
-  empty$
-    { skip$ }
-    { CTLuse_article_number
-      yes.no.to.int
-      'is.use.number.for.article :=
-    }
-  if$
-  CTLuse_paper
-  empty$
-    { skip$ }
-    { CTLuse_paper
-      yes.no.to.int
-      'is.use.paper :=
-    }
-  if$
-  CTLuse_url
-  empty$
-    { skip$ }
-    { CTLuse_url
-      yes.no.to.int
-      'is.use.url :=
-    }
-  if$
-  CTLuse_forced_etal
-  empty$
-    { skip$ }
-    { CTLuse_forced_etal
-      yes.no.to.int
-      'is.forced.et.al :=
-    }
-  if$
-  CTLmax_names_forced_etal
-  empty$
-    { skip$ }
-    { CTLmax_names_forced_etal
-      string.to.integer
-      'max.num.names.before.forced.et.al :=
-    }
-  if$
-  CTLnames_show_etal
-  empty$
-    { skip$ }
-    { CTLnames_show_etal
-      string.to.integer
-      'num.names.shown.with.forced.et.al :=
-    }
-  if$
-  CTLuse_alt_spacing
-  empty$
-    { skip$ }
-    { CTLuse_alt_spacing
-      yes.no.to.int
-      'is.use.alt.interword.spacing :=
-    }
-  if$
-  CTLalt_stretch_factor
-  empty$
-    { skip$ }
-    { CTLalt_stretch_factor
-      'ALTinterwordstretchfactor :=
-      "\renewcommand{\BIBentryALTinterwordstretchfactor}{"
-      ALTinterwordstretchfactor * "}" *
-      write$ newline$
-    }
-  if$
-  CTLdash_repeated_names
-  empty$
-    { skip$ }
-    { CTLdash_repeated_names
-      yes.no.to.int
-      'is.dash.repeated.names :=
-    }
-  if$
-  CTLname_format_string
-  empty$
-    { skip$ }
-    { CTLname_format_string
-      'name.format.string :=
-    }
-  if$
-  CTLname_latex_cmd
-  empty$
-    { skip$ }
-    { CTLname_latex_cmd
-      'name.latex.cmd :=
-    }
-  if$
-  CTLname_url_prefix
-  missing$
-    { skip$ }
-    { CTLname_url_prefix
-      'name.url.prefix :=
-    }
-  if$
-
-
-  num.names.shown.with.forced.et.al max.num.names.before.forced.et.al >
-    { "CTLnames_show_etal cannot be greater than CTLmax_names_forced_etal in " cite$ * warning$ 
-      max.num.names.before.forced.et.al 'num.names.shown.with.forced.et.al :=
-    }
-    { skip$ }
-  if$
-}
-
-
-%%%%%%%%%%%%%%%%%%%
-%% ENTRY ALIASES %%
-%%%%%%%%%%%%%%%%%%%
-FUNCTION {conference}{inproceedings}
-FUNCTION {online}{electronic}
-FUNCTION {internet}{electronic}
-FUNCTION {webpage}{electronic}
-FUNCTION {www}{electronic}
-FUNCTION {default.type}{misc}
-
 
 
 %%%%%%%%%%%%%%%%%%
