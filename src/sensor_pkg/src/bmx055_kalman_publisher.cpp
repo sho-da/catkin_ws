@@ -1,11 +1,12 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
-#include <pigpio.h>
+#include "pigpiod_if2.h"
 #include <cmath>
 #include <unistd.h>
 
-const int ACCL_ADDR=0x19;
-const int GYRO_ADDR=0x69;
+const int ACC_ADDR=0x19;
+const int GYR_ADDR=0x69;
+int pi;
 
 //=========================================================
 //Accelerometer and gyro statistical data
@@ -27,13 +28,12 @@ float theta_data_predict[2][1];
 float theta_data[2][1];
 //Covariance matrix
 float P_theta_predict[2][2];
-// float P_theta[2][2]; // !caution!
 //"A" of the state equation
-float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};
+float A_theta[2][2] = {{1, -theta_update_interval}, {0, 1}};  //const
 //"B" of the state equation
-float B_theta[2][1] = {{theta_update_interval}, {0}};
+float B_theta[2][1] = {{theta_update_interval}, {0}};         //const
 //"C" of the state equation
-const float C_theta[1][2] = {{1, 0}};
+float C_theta[1][2] = {{1, 0}};                               //const
 
 //=========================================================
 // Matrix common functions
@@ -107,145 +107,42 @@ void mat_mul_const(float *m1,float c, float *sol, int row, int column)
     return;
 }
 
-//Matrix inversion (by Gaussian elimination)
-void mat_inv(float *m, float *sol, int column, int row)
-{
-    //allocate memory for a temporary matrix
-    float* temp = (float *)malloc( column*2*row*sizeof(float) );
-    
-    //make the augmented matrix
-    for(int i=0; i<column; i++)
-    {
-        //copy original matrix
-        for(int j=0; j<row; j++)
-        {
-            temp[i*(2*row) + j] = m[i*row + j];  
-        }
-        
-        //make identity matrix
-        for(int j=row; j<row*2; j++)
-        {
-            if(j-row == i)
-            {
-                temp[i*(2*row) + j] = 1;
-            }    
-            else
-            {
-                temp[i*(2*row) + j] = 0;    
-            }
-        }
-    }
-
-    //Sweep (down)
-    for(int i=0; i<column; i++)
-    {
-        //pivot selection
-        float pivot = temp[i*(2*row) + i];
-        int pivot_index = i;
-        float pivot_temp;
-        for(int j=i; j<column;j++)
-        {
-            if( temp[j*(2*row)+i] > pivot )
-            {
-                pivot = temp[j*(2*row) + i];
-                pivot_index = j;
-            }    
-        }  
-        if(pivot_index != i)
-        {
-            for(int j=0; j<2*row; j++)
-            {
-                pivot_temp = temp[ pivot_index * (2*row) + j ];
-                temp[pivot_index * (2*row) + j] = temp[i*(2*row) + j];
-                temp[i*(2*row) + j] = pivot_temp;    
-            }    
-        }
-        
-        //division
-        for(int j=0; j<2*row; j++)
-        {
-            temp[i*(2*row) + j] /= pivot;    
-        }
-        
-        //sweep
-        for(int j=i+1; j<column; j++)
-        {
-            float temp2 = temp[j*(2*row) + i];
-            
-            //sweep each row
-            for(int k=0; k<row*2; k++)
-            {
-                temp[j*(2*row) + k] -= temp2 * temp[ i*(2*row) + k ];    
-            }    
-        }
-    }
-        
-    //Sweep (up)
-    for(int i=0; i<column-1; i++)
-    {
-        for(int j=i+1; j<column; j++)
-        {
-            float pivot = temp[ (column-1-j)*(2*row) + (row-1-i)];   
-            for(int k=0; k<2*row; k++)
-            {
-                temp[(column-1-j)*(2*row)+k] -= pivot * temp[(column-1-i)*(2*row)+k];    
-            }
-        }    
-    }     
-    
-    //copy result
-    for(int i=0; i<column; i++)
-    {
-        for(int j=0; j<row; j++)
-        {
-            sol[i*row + j] = temp[i*(2*row) + (j+row)];    
-        }    
-    }
-    free(temp);
-    return;
-}
-
-float get_accl_data(int bus) {
-    float theta1_deg =0;
+float get_acc_data(int bus) {
     unsigned char data[4];
-    i2cReadI2CBlockData(bus, 0x04, (char*)data, 4);
+    i2c_read_i2c_block_data(pi,bus, 0x04, (char *)data, 4);
     
     int y_data = ((data[0] & 0xF0) + (data[1] * 256)) / 16;
-    if (y_data > 2047) {
-        y_data -= 4096;
-    }
+    if (y_data > 2047) {y_data -= 4096;}
 
     int z_data = ((data[2] & 0xF0) + (data[3] * 256)) / 16;
-    if (z_data > 2047) {
-        z_data -= 4096;
-    }
+    if (z_data > 2047) {z_data -= 4096;}
 
-    theta1_deg = atan2( float(z_data),float(y_data)) * 57.29578f;
+    float theta1_deg = atan2( float(z_data),float(y_data)) * 57.29578f;
     return theta1_deg;
 }
 
-void accl_init(int bus)
+void acc_init(int bus)
 {             
     //initialize ACC register 0x0F (range)
     //Full scale = +/- 2 G
-    i2cWriteByteData(bus, 0x0F, 0x03);
+    i2c_write_byte_data(pi,bus, 0x0F, 0x03);
     //initialize ACC register 0x10 (band width)
     //Filter bandwidth = 1000 Hz
-    i2cWriteByteData(bus, 0x10, 0x0F);
+    i2c_write_byte_data(pi,bus, 0x10, 0x0F);
  
     //get data
     float theta_array[sample_num];
     for(int i=0; i<sample_num; i++)
     {
-        theta_array[i] = get_accl_data(bus);    
-        wait( meas_interval );
+        theta_array[i] = get_acc_data(bus);    
+        sleep( meas_interval );
     }
     
     //calculate mean
     theta_mean = 0;
     for(int i=0; i<sample_num; i++)
     {
-            theta_mean += theta_array[i];
+        theta_mean += theta_array[i];
     }
     theta_mean /= sample_num;
     
@@ -254,43 +151,40 @@ void accl_init(int bus)
     theta_variance = 0;
     for(int i=0; i<sample_num; i++)
     {
-            temp = theta_array[i] - theta_mean;
-            theta_variance += temp*temp;
+        temp = theta_array[i] - theta_mean;
+        theta_variance += temp*temp;
     }
     theta_variance /= sample_num;
     return;
 }
 
-float get_gyro_data(int bus) {
-    int theta1_dot=0;
+float get_gyr_data(int bus) {
     unsigned char data[2];
-    i2cReadI2CBlockData(bus, 0x02, (char*)data, 2);
+    i2c_read_i2c_block_data(pi,bus, 0x02, (char*)data, 2);
     
-    theta1_dot = data[0] + 256 * data[1];
-    if (theta1_dot > 32767) {
-        theta1_dot -= 65536;
-    }
+    int theta1_dot = data[0] + 256 * data[1];
+    if (theta1_dot > 32767) {theta1_dot -= 65536;}
     theta1_dot = -1 * theta1_dot; // !caution!
     // +1000 (deg/sec) / 2^15 = 0.0305176
     return float(theta1_dot) * 0.0305176f;
 }
 
 //statistical data of gyro
-void gyro_init(int bus)
+void gyr_init(int bus)
 {             
     //initialize Gyro register 0x0F (range)
     //Full scale = +/- 1000 deg/s
-    i2cWriteByteData(bus, 0x0F, 0x01);
+    i2c_write_byte_data(pi,bus, 0x0F, 0x01);
     //initialize Gyro register 0x10 (band width)
     //Data rate = 1000 Hz, Filter bandwidth = 116 Hz
-    i2cWriteByteData(bus, 0x10, 0x02);
+    i2c_write_byte_data(pi,bus, 0x10, 0x02);
   
     //get data
     float theta_dot_array[sample_num];
     for(int i=0;i<sample_num;i++)
     {
-        theta_dot_array[i] = get_gyro_data(bus);    
-        wait(meas_interval);
+        theta_dot_array[i] = get_gyr_data(bus);    
+        sleep(meas_interval);
     }
     
     //calculate mean
@@ -317,13 +211,13 @@ void gyro_init(int bus)
 //Kalman filter for "theta" & "theta_dot_bias" 
 //It takes 650 usec. (NUCLEO-F401RE 84MHz, BMX055)
 //=========================================================
-void update_theta(int bus_accl,int bus_gyro)
+void update_theta(int bus_acc,int bus_gyr)
 {     
     //measurement data
-    float y = get_accl_data(bus_accl); //degree
+    float y = get_acc_data(bus_acc); //degree
     
     //input data
-    float theta_dot_gyro = get_gyro_data(bus_gyro); //degree/sec
+    float theta_dot_gyr = get_gyr_data(bus_gyr); //degree/sec
       
     //calculate Kalman gain: G = P'C^T(W+CP'C^T)^-1
     float tran_C_theta[2][1] = {};
@@ -350,14 +244,14 @@ void update_theta(int bus_accl,int bus_gyro)
     mat_mul(G[0], C_theta[0], GC[0], 2, 1, 1, 2);//GC
     float I2_GC[2][2] = {};
     mat_sub(I2[0], GC[0], I2_GC[0], 2, 2);//I-GC
-    float P_theta[2][2] = {}; // !caution!
+    float P_theta[2][2] = {};
     mat_mul(I2_GC[0], P_theta_predict[0], P_theta[0], 2, 2, 2, 2);//(I-GC)P'
       
     //predict the next step data: theta'=Atheta+Bu
     float A_theta_theta[2][1] = {};
     float B_theta_dot[2][1] = {};
     mat_mul(A_theta[0], theta_data[0], A_theta_theta[0], 2, 2, 2, 1);//Atheta
-    mat_mul_const(B_theta[0], theta_dot_gyro, B_theta_dot[0], 2, 1);//Bu
+    mat_mul_const(B_theta[0], theta_dot_gyr, B_theta_dot[0], 2, 1);//Bu
     mat_add(A_theta_theta[0], B_theta_dot[0], theta_data_predict[0], 2, 1);//Atheta+Bu 
     
     //predict covariance matrix: P'=APA^T + BUB^T
@@ -377,16 +271,13 @@ void update_theta(int bus_accl,int bus_gyro)
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "bmx055_kalman_publisher");
-    ros::NodeHandle nh;
-    ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 1);
-    ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 1);
-    
+    pi=pigpio_start(NULL,NULL);
+
     //I2C setting
-    int bus_accl = i2cOpen(0, ACCL_ADDR, 0);
-    int bus_gyro = i2cOpen(1, GYRO_ADDR, 0);
-    accl_init(bus_accl); 
-    gyro_init(bus_gyro);
+    int bus_acc = i2c_open(pi, 1, ACC_ADDR, 0);
+    int bus_gyr = i2c_open(pi, 1, GYR_ADDR, 0);
+    acc_init(bus_acc); 
+    gyr_init(bus_gyr);
 
     //Kalman filter (angle) initialization
     //initial value of theta_data_predict
@@ -398,42 +289,48 @@ int main(int argc, char **argv) {
     P_theta_predict[0][1] = 0;
     P_theta_predict[1][0] = 0;
     P_theta_predict[1][1] = theta_dot_variance;
-    
-    std_msgs::Float64 c_var_msg;
-    c_var_msg.data = theta_variance;
-    imu_pub1.publish(c_var_msg);
-    
-    std_msgs::Float64 cdot_var_msg;
-    cdot_var_msg.data = theta_dot_variance;
-    imu_pub1.publish(cdot_var_msg);
-    
-    var_pub1.shutdown();
-    var_pub2.shutdown();
 
-    ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 1);
-    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 1);
-
-    ros::Rate rate(theta_update_freq);  // パブリッシュの頻度を設定 (400 Hz)
+    ros::init(argc, argv, "bmx055_kalman_publisher");
+    ros::NodeHandle nh;
+    ros::Publisher var_pub1 = nh.advertise<std_msgs::Float64>("c_var_topic", 10);
+    ros::Publisher var_pub2 = nh.advertise<std_msgs::Float64>("cdot_var_topic", 10);
+    ros::Publisher imu_pub1 = nh.advertise<std_msgs::Float64>("theta1_topic", 10);
+    ros::Publisher imu_pub2 = nh.advertise<std_msgs::Float64>("theta1dot_temp_topic", 10);
+    
+    ros::Rate rate(400);  // パブリッシュの頻度を設定 (400 Hz)
 
     float theta1dot_temp;
-
+    int count=0;
     while (ros::ok()) {
-        update_theta(bus_accl, bus_gyro);
-        theta1dot_temp = get_gyro_data(bus_gyro);
+        std_msgs::Float64 c_var_msg;
+        c_var_msg.data = theta_variance;
+        var_pub1.publish(c_var_msg);
+        std_msgs::Float64 cdot_var_msg;
+        cdot_var_msg.data = theta_dot_variance;
+        var_pub2.publish(cdot_var_msg);
+
+        update_theta(bus_acc, bus_gyr);
+        
+        theta1dot_temp = get_gyr_data(bus_gyr);
         std_msgs::Float64 imu_msg1;
         imu_msg1.data = theta_data[0][0];
         imu_pub1.publish(imu_msg1);
         std_msgs::Float64 imu_msg2;
         imu_msg2.data = (theta1dot_temp - theta_data[1][0]) * 3.14f/180;
         imu_pub2.publish(imu_msg2);
+
+        count += 1;
+        if (count % 100 == 0){
+            ROS_INFO("Publish theta1 from BMX055: %f", imu_msg1.data);
+            ROS_INFO("Publish theta1dot_temp from BMX055: %f", imu_msg2.data);
+        }
         
-        ROS_INFO("Publish theta1 from BMX055: %d", imu_msg.data);
-        ROS_INFO("Publish theta1dot_temp from BMX055: %d", imu_msg2.data);
         
         rate.sleep();
     }
 
-    i2cClose(bus_accl);
-    i2cClose(bus_gyro);
+    i2c_close(pi,bus_acc);
+    i2c_close(pi,bus_gyr);
+    pigpio_stop(pi);
     return 0;
 }

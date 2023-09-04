@@ -168,6 +168,21 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+sensor_pkg/CMakeFiles/encoder_publisher.dir/rule:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 sensor_pkg/CMakeFiles/encoder_publisher.dir/rule
+.PHONY : sensor_pkg/CMakeFiles/encoder_publisher.dir/rule
+
+# Convenience name for target.
+encoder_publisher: sensor_pkg/CMakeFiles/encoder_publisher.dir/rule
+
+.PHONY : encoder_publisher
+
+# fast build rule for target.
+encoder_publisher/fast:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/encoder_publisher.dir/build.make sensor_pkg/CMakeFiles/encoder_publisher.dir/build
+.PHONY : encoder_publisher/fast
+
+# Convenience name for target.
 sensor_pkg/CMakeFiles/std_msgs_generate_messages_py.dir/rule:
 	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 sensor_pkg/CMakeFiles/std_msgs_generate_messages_py.dir/rule
 .PHONY : sensor_pkg/CMakeFiles/std_msgs_generate_messages_py.dir/rule
@@ -196,21 +211,6 @@ std_msgs_generate_messages_nodejs: sensor_pkg/CMakeFiles/std_msgs_generate_messa
 std_msgs_generate_messages_nodejs/fast:
 	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/std_msgs_generate_messages_nodejs.dir/build.make sensor_pkg/CMakeFiles/std_msgs_generate_messages_nodejs.dir/build
 .PHONY : std_msgs_generate_messages_nodejs/fast
-
-# Convenience name for target.
-sensor_pkg/CMakeFiles/bmx055_publisher.dir/rule:
-	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 sensor_pkg/CMakeFiles/bmx055_publisher.dir/rule
-.PHONY : sensor_pkg/CMakeFiles/bmx055_publisher.dir/rule
-
-# Convenience name for target.
-bmx055_publisher: sensor_pkg/CMakeFiles/bmx055_publisher.dir/rule
-
-.PHONY : bmx055_publisher
-
-# fast build rule for target.
-bmx055_publisher/fast:
-	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bmx055_publisher.dir/build.make sensor_pkg/CMakeFiles/bmx055_publisher.dir/build
-.PHONY : bmx055_publisher/fast
 
 # Convenience name for target.
 sensor_pkg/CMakeFiles/roscpp_generate_messages_cpp.dir/rule:
@@ -271,6 +271,21 @@ std_msgs_generate_messages_lisp: sensor_pkg/CMakeFiles/std_msgs_generate_message
 std_msgs_generate_messages_lisp/fast:
 	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/std_msgs_generate_messages_lisp.dir/build.make sensor_pkg/CMakeFiles/std_msgs_generate_messages_lisp.dir/build
 .PHONY : std_msgs_generate_messages_lisp/fast
+
+# Convenience name for target.
+sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/rule:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f CMakeFiles/Makefile2 sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/rule
+.PHONY : sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/rule
+
+# Convenience name for target.
+bno055_kalman_publisher: sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/rule
+
+.PHONY : bno055_kalman_publisher
+
+# fast build rule for target.
+bno055_kalman_publisher/fast:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build.make sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build
+.PHONY : bno055_kalman_publisher/fast
 
 # Convenience name for target.
 sensor_pkg/CMakeFiles/roscpp_generate_messages_py.dir/rule:
@@ -407,32 +422,59 @@ rosgraph_msgs_generate_messages_py/fast:
 	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/rosgraph_msgs_generate_messages_py.dir/build.make sensor_pkg/CMakeFiles/rosgraph_msgs_generate_messages_py.dir/build
 .PHONY : rosgraph_msgs_generate_messages_py/fast
 
-src/bmx055_publisher.o: src/bmx055_publisher.cpp.o
+src/bno055_kalman_publisher.o: src/bno055_kalman_publisher.cpp.o
 
-.PHONY : src/bmx055_publisher.o
+.PHONY : src/bno055_kalman_publisher.o
 
 # target to build an object file
-src/bmx055_publisher.cpp.o:
-	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bmx055_publisher.dir/build.make sensor_pkg/CMakeFiles/bmx055_publisher.dir/src/bmx055_publisher.cpp.o
-.PHONY : src/bmx055_publisher.cpp.o
+src/bno055_kalman_publisher.cpp.o:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build.make sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/src/bno055_kalman_publisher.cpp.o
+.PHONY : src/bno055_kalman_publisher.cpp.o
 
-src/bmx055_publisher.i: src/bmx055_publisher.cpp.i
+src/bno055_kalman_publisher.i: src/bno055_kalman_publisher.cpp.i
 
-.PHONY : src/bmx055_publisher.i
+.PHONY : src/bno055_kalman_publisher.i
 
 # target to preprocess a source file
-src/bmx055_publisher.cpp.i:
-	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bmx055_publisher.dir/build.make sensor_pkg/CMakeFiles/bmx055_publisher.dir/src/bmx055_publisher.cpp.i
-.PHONY : src/bmx055_publisher.cpp.i
+src/bno055_kalman_publisher.cpp.i:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build.make sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/src/bno055_kalman_publisher.cpp.i
+.PHONY : src/bno055_kalman_publisher.cpp.i
 
-src/bmx055_publisher.s: src/bmx055_publisher.cpp.s
+src/bno055_kalman_publisher.s: src/bno055_kalman_publisher.cpp.s
 
-.PHONY : src/bmx055_publisher.s
+.PHONY : src/bno055_kalman_publisher.s
 
 # target to generate assembly for a file
-src/bmx055_publisher.cpp.s:
-	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bmx055_publisher.dir/build.make sensor_pkg/CMakeFiles/bmx055_publisher.dir/src/bmx055_publisher.cpp.s
-.PHONY : src/bmx055_publisher.cpp.s
+src/bno055_kalman_publisher.cpp.s:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/build.make sensor_pkg/CMakeFiles/bno055_kalman_publisher.dir/src/bno055_kalman_publisher.cpp.s
+.PHONY : src/bno055_kalman_publisher.cpp.s
+
+src/encoder_publisher.o: src/encoder_publisher.cpp.o
+
+.PHONY : src/encoder_publisher.o
+
+# target to build an object file
+src/encoder_publisher.cpp.o:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/encoder_publisher.dir/build.make sensor_pkg/CMakeFiles/encoder_publisher.dir/src/encoder_publisher.cpp.o
+.PHONY : src/encoder_publisher.cpp.o
+
+src/encoder_publisher.i: src/encoder_publisher.cpp.i
+
+.PHONY : src/encoder_publisher.i
+
+# target to preprocess a source file
+src/encoder_publisher.cpp.i:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/encoder_publisher.dir/build.make sensor_pkg/CMakeFiles/encoder_publisher.dir/src/encoder_publisher.cpp.i
+.PHONY : src/encoder_publisher.cpp.i
+
+src/encoder_publisher.s: src/encoder_publisher.cpp.s
+
+.PHONY : src/encoder_publisher.s
+
+# target to generate assembly for a file
+src/encoder_publisher.cpp.s:
+	cd /home/ubuntu/catkin_ws/build && $(MAKE) -f sensor_pkg/CMakeFiles/encoder_publisher.dir/build.make sensor_pkg/CMakeFiles/encoder_publisher.dir/src/encoder_publisher.cpp.s
+.PHONY : src/encoder_publisher.cpp.s
 
 # Help Target
 help:
@@ -444,14 +486,15 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... test"
+	@echo "... encoder_publisher"
 	@echo "... std_msgs_generate_messages_py"
 	@echo "... std_msgs_generate_messages_nodejs"
-	@echo "... bmx055_publisher"
 	@echo "... roscpp_generate_messages_cpp"
 	@echo "... roscpp_generate_messages_eus"
 	@echo "... rosgraph_msgs_generate_messages_nodejs"
 	@echo "... list_install_components"
 	@echo "... std_msgs_generate_messages_lisp"
+	@echo "... bno055_kalman_publisher"
 	@echo "... roscpp_generate_messages_py"
 	@echo "... install"
 	@echo "... std_msgs_generate_messages_eus"
@@ -463,9 +506,12 @@ help:
 	@echo "... rosgraph_msgs_generate_messages_lisp"
 	@echo "... roscpp_generate_messages_lisp"
 	@echo "... rosgraph_msgs_generate_messages_py"
-	@echo "... src/bmx055_publisher.o"
-	@echo "... src/bmx055_publisher.i"
-	@echo "... src/bmx055_publisher.s"
+	@echo "... src/bno055_kalman_publisher.o"
+	@echo "... src/bno055_kalman_publisher.i"
+	@echo "... src/bno055_kalman_publisher.s"
+	@echo "... src/encoder_publisher.o"
+	@echo "... src/encoder_publisher.i"
+	@echo "... src/encoder_publisher.s"
 .PHONY : help
 
 
